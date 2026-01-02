@@ -36,3 +36,4 @@
 
 ## Bug Fixes
 - [x] Fix vision.get query returning undefined instead of null
+- [x] Add "Designed by Hiturn Media" to footer

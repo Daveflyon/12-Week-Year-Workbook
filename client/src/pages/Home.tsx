@@ -215,8 +215,9 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-border py-8">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
+        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground space-y-1">
           <p>Based on "The 12 Week Year" by Brian P. Moran and Michael Lennington</p>
+          <p>Designed by Hiturn Media</p>
         </div>
       </footer>
     </div>
