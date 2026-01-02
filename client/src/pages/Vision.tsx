@@ -130,7 +130,7 @@ export default function Vision() {
             <Textarea
               value={longTermVision}
               onChange={(e) => setLongTermVision(e.target.value)}
-              placeholder="Example: To be a recognized expert in my field, leading a high-impact team, achieving financial independence, and having the freedom to travel and spend quality time with family..."
+              placeholder="Example: To be a recognised expert in my field, leading a high-impact team, achieving financial independence, and having the freedom to travel and spend quality time with family..."
               className="min-h-[150px] bg-input border-border"
             />
             <p className="text-xs text-muted-foreground mt-2">

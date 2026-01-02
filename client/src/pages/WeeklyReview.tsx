@@ -11,6 +11,28 @@ import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { toast } from "sonner";
 import { getQuoteForWeek, WEEK_THEMES } from "@shared/quotes";
+import TooltipTour, { TourStep } from "@/components/TooltipTour";
+
+const REVIEW_TOUR_STEPS: TourStep[] = [
+  {
+    target: "[data-tour='score-summary']",
+    title: "Weekly Score Summary",
+    content: "Review your execution score for the week. This helps you understand your performance before reflecting.",
+    position: "bottom",
+  },
+  {
+    target: "[data-tour='reflection-section']",
+    title: "Weekly Reflection",
+    content: "Answer these questions honestly. What worked? What didn't? What will you adjust? This drives continuous improvement.",
+    position: "top",
+  },
+  {
+    target: "[data-tour='wam-section']",
+    title: "Weekly Accountability Meeting",
+    content: "Track your WAM with your accountability partner. Regular check-ins dramatically improve execution.",
+    position: "top",
+  },
+];
 
 export default function WeeklyReview() {
   const params = useParams<{ weekNumber?: string }>();
@@ -128,8 +150,11 @@ export default function WeeklyReview() {
           </Button>
         </div>
 
+        {/* Tooltip Tour */}
+        <TooltipTour pageKey="review" steps={REVIEW_TOUR_STEPS} />
+
         {/* Week Navigation */}
-        <Card className="bg-card border-border">
+        <Card className="bg-card border-border" data-tour="score-summary">
           <CardContent className="py-4">
             <div className="flex items-center justify-between">
               <Button 
@@ -221,7 +246,7 @@ export default function WeeklyReview() {
         </div>
 
         {/* WAM Section */}
-        <Card className="bg-card border-border">
+        <Card className="bg-card border-border" data-tour="wam-section">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle2 className="h-5 w-5 text-primary" />
@@ -259,7 +284,7 @@ export default function WeeklyReview() {
         </Card>
 
         {/* Review Questions */}
-        <Card className="bg-card border-border">
+        <Card className="bg-card border-border" data-tour="reflection-section">
           <CardHeader>
             <CardTitle>Weekly Reflection</CardTitle>
             <CardDescription>

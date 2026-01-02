@@ -47,3 +47,13 @@
 - [x] Add help button to access onboarding guide anytime
 - [x] Create contextual help for each screen
 - [x] Allow users to replay intro from help menu
+
+## First-Visit Tooltips (Phase 4)
+- [x] Create tooltip tour system component
+- [x] Add tooltips to Dashboard page
+- [x] Add tooltips to Goals page
+- [x] Add tooltips to Scorecard page
+- [x] Add tooltips to Performance Blocks page
+- [x] Add tooltips to Weekly Review page
+- [x] Store visited pages in localStorage to show tooltips only once
+- [x] Convert all text to British English spelling

@@ -179,7 +179,7 @@ export const WEEK_THEMES = [
   { week: 8, theme: "Avoiding Pitfalls", quote: BOOK_QUOTES[10] },
   { week: 9, theme: "Sustained Effort", quote: BOOK_QUOTES[8] },
   { week: 10, theme: "Final Push", quote: BOOK_QUOTES[9] },
-  { week: 11, theme: "Finalizing Tactics", quote: BOOK_QUOTES[11] },
+  { week: 11, theme: "Finalising Tactics", quote: BOOK_QUOTES[11] },
   { week: 12, theme: "Execution Completion", quote: BOOK_QUOTES[14] },
   { week: 13, theme: "Review and Planning", quote: BOOK_QUOTES[13] },
 ];

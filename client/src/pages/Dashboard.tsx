@@ -20,6 +20,34 @@ import { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { BOOK_QUOTES, FLASHCARDS, getRandomQuote, getRandomFlashcard } from "@shared/quotes";
 import Onboarding from "@/components/Onboarding";
+import TooltipTour, { TourStep } from "@/components/TooltipTour";
+
+const DASHBOARD_TOUR_STEPS: TourStep[] = [
+  {
+    target: "[data-tour='score-card']",
+    title: "Your Execution Score",
+    content: "This shows your current week's execution score. Aim for 85% or higher to stay on track with your goals.",
+    position: "bottom",
+  },
+  {
+    target: "[data-tour='score-chart']",
+    title: "Progress Over Time",
+    content: "Track your execution score trend across all 12 weeks. The green line shows the 85% target threshold.",
+    position: "top",
+  },
+  {
+    target: "[data-tour='community-progress']",
+    title: "Community Comparison",
+    content: "See how your execution compares to other users. Use this as motivation to stay above average!",
+    position: "top",
+  },
+  {
+    target: "[data-tour='flashcard']",
+    title: "Daily Flashcards",
+    content: "Reinforce key concepts with daily flashcards. Tap to reveal the answer and build lasting habits.",
+    position: "left",
+  },
+];
 
 function FlashcardWidget() {
   const [flipped, setFlipped] = useState(false);
@@ -39,9 +67,9 @@ function FlashcardWidget() {
   };
 
   return (
-    <Card className="bg-card border-border">
+    <Card className="bg-card border-border" data-tour="flashcard">
       <CardHeader className="pb-2">
-        <CardTitle className="text-lg flex items-center gap-2">
+        <CardTitle className="text-lg flex items-centre gap-2">
           <Sparkles className="h-5 w-5 text-primary" />
           Daily Flashcard
         </CardTitle>
@@ -240,9 +268,12 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Tooltip Tour */}
+        <TooltipTour pageKey="dashboard" steps={DASHBOARD_TOUR_STEPS} />
+
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <Card className="bg-card border-border card-hover">
+          <Card className="bg-card border-border card-hover" data-tour="score-card">
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -268,7 +299,7 @@ export default function Dashboard() {
 
           <Card className="bg-card border-border card-hover">
             <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
+              <div className="flex items-centre justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Average Score</p>
                   <p className="text-3xl font-bold mt-1">
@@ -298,9 +329,9 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          <Card className="bg-card border-border card-hover">
+          <Card className="bg-card border-border card-hover" data-tour="community-progress">
             <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
+              <div className="flex items-centre justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">vs. Community</p>
                   <p className="text-3xl font-bold mt-1">
@@ -332,7 +363,7 @@ export default function Dashboard() {
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Execution Score Chart */}
-          <Card className="lg:col-span-2 bg-card border-border">
+          <Card className="lg:col-span-2 bg-card border-border" data-tour="score-chart">
             <CardHeader>
               <CardTitle>Execution Score Trend</CardTitle>
               <CardDescription>Weekly execution scores with 85% target line</CardDescription>

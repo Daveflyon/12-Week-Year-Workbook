@@ -36,7 +36,7 @@ const PAGE_HELP = {
   dashboard: {
     title: "Dashboard",
     icon: LayoutDashboard,
-    content: `The Dashboard is your command center for tracking your 12-week execution.
+    content: `The Dashboard is your command centre for tracking your 12-week execution.
 
 **What you'll see here:**
 • Your current execution score and trend over time

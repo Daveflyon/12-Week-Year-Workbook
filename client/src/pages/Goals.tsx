@@ -11,6 +11,28 @@ import { Target, Plus, Trash2, Edit, CheckCircle2, Quote } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { getRandomQuote } from "@shared/quotes";
+import TooltipTour, { TourStep } from "@/components/TooltipTour";
+
+const GOALS_TOUR_STEPS: TourStep[] = [
+  {
+    target: "[data-tour='add-goal-btn']",
+    title: "Add Your Goals",
+    content: "Create 1-3 SMART goals for this 12-week cycle. Focus is key - fewer goals mean better execution.",
+    position: "bottom",
+  },
+  {
+    target: "[data-tour='goal-card']",
+    title: "Goal Structure",
+    content: "Each goal has a lag indicator (the outcome you want) and lead indicators (the actions that drive results).",
+    position: "right",
+  },
+  {
+    target: "[data-tour='tactic-section']",
+    title: "Weekly Tactics",
+    content: "Add specific, measurable tactics with weekly targets. These become your daily scorecard items.",
+    position: "top",
+  },
+];
 
 function GoalForm({ 
   cycleId, 
@@ -244,11 +266,11 @@ function GoalCard({ goal, cycleId }: { goal: any; cycleId: number }) {
   };
 
   return (
-    <Card className="bg-card border-border">
+    <Card className="bg-card border-border" data-tour="goal-card">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex items-start gap-3">
-            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+            <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-centre justify-centre shrink-0">
               <Target className="h-5 w-5 text-primary" />
             </div>
             <div>
@@ -400,12 +422,16 @@ export default function Goals() {
             <Button 
               onClick={() => setIsAddingGoal(true)}
               className="gradient-primary text-primary-foreground"
+              data-tour="add-goal-btn"
             >
               <Plus className="mr-2 h-4 w-4" />
               Add Goal
             </Button>
           )}
         </div>
+
+        {/* Tooltip Tour */}
+        <TooltipTour pageKey="goals" steps={GOALS_TOUR_STEPS} />
 
         {/* Quote Card */}
         <div className="quote-card">

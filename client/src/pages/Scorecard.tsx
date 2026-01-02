@@ -11,6 +11,34 @@ import { useState, useEffect, useMemo } from "react";
 import { useParams } from "wouter";
 import { toast } from "sonner";
 import { getQuoteForWeek, WEEK_THEMES } from "@shared/quotes";
+import TooltipTour, { TourStep } from "@/components/TooltipTour";
+
+const SCORECARD_TOUR_STEPS: TourStep[] = [
+  {
+    target: "[data-tour='week-nav']",
+    title: "Week Navigation",
+    content: "Navigate between weeks using the arrows or dropdown. Each week has a theme to guide your focus.",
+    position: "bottom",
+  },
+  {
+    target: "[data-tour='execution-score']",
+    title: "Execution Score",
+    content: "Your weekly execution score shows the percentage of tactics completed. Aim for 85% or higher!",
+    position: "bottom",
+  },
+  {
+    target: "[data-tour='tactic-grid']",
+    title: "Daily Tracking",
+    content: "Enter your daily progress for each tactic. The grid shows all 7 days of the week.",
+    position: "top",
+  },
+  {
+    target: "[data-tour='save-btn']",
+    title: "Save Your Progress",
+    content: "Remember to save your scorecard regularly. Your execution score is calculated automatically.",
+    position: "left",
+  },
+];
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -213,6 +241,7 @@ export default function Scorecard() {
               onClick={handleSave}
               disabled={upsertEntry.isPending || upsertWeeklyScore.isPending}
               className="gradient-primary text-primary-foreground"
+              data-tour="save-btn"
             >
               <Save className="mr-2 h-4 w-4" />
               Save Scorecard
@@ -220,8 +249,11 @@ export default function Scorecard() {
           </div>
         </div>
 
+        {/* Tooltip Tour */}
+        <TooltipTour pageKey="scorecard" steps={SCORECARD_TOUR_STEPS} />
+
         {/* Week Navigation */}
-        <Card className="bg-card border-border">
+        <Card className="bg-card border-border" data-tour="week-nav">
           <CardContent className="py-4">
             <div className="flex items-center justify-between">
               <Button 
@@ -278,7 +310,7 @@ export default function Scorecard() {
         </div>
 
         {/* Execution Score */}
-        <Card className="bg-card border-border">
+        <Card className="bg-card border-border" data-tour="execution-score">
           <CardContent className="py-6">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -307,7 +339,7 @@ export default function Scorecard() {
 
         {/* Scorecard Table */}
         {tactics && tactics.length > 0 ? (
-          <Card className="bg-card border-border overflow-hidden">
+          <Card className="bg-card border-border overflow-hidden" data-tour="tactic-grid">
             <CardHeader>
               <CardTitle>Daily Tracking</CardTitle>
               <CardDescription>

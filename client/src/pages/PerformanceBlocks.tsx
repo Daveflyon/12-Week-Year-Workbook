@@ -11,6 +11,28 @@ import { Clock, Plus, Trash2, Edit, Quote, Zap, Coffee, Sparkles } from "lucide-
 import { useState } from "react";
 import { toast } from "sonner";
 import { getRandomQuote } from "@shared/quotes";
+import TooltipTour, { TourStep } from "@/components/TooltipTour";
+
+const BLOCKS_TOUR_STEPS: TourStep[] = [
+  {
+    target: "[data-tour='block-types']",
+    title: "Three Types of Blocks",
+    content: "Strategic blocks are for deep work (3+ hours). Buffer blocks handle admin tasks. Breakout blocks are for growth and recharge.",
+    position: "bottom",
+  },
+  {
+    target: "[data-tour='weekly-schedule']",
+    title: "Your Weekly Schedule",
+    content: "Plan your blocks for each day of the week. Consistency is key to building productive habits.",
+    position: "top",
+  },
+  {
+    target: "[data-tour='add-block-btn']",
+    title: "Add Performance Blocks",
+    content: "Click here to schedule a new block. Start with at least one Strategic block per day.",
+    position: "left",
+  },
+];
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const BLOCK_TYPES = [
@@ -247,11 +269,15 @@ export default function PerformanceBlocks() {
           <Button 
             onClick={() => setIsAdding(true)}
             className="gradient-primary text-primary-foreground"
+            data-tour="add-block-btn"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add Block
           </Button>
         </div>
+
+        {/* Tooltip Tour */}
+        <TooltipTour pageKey="blocks" steps={BLOCKS_TOUR_STEPS} />
 
         {/* Quote Card */}
         <div className="quote-card">
@@ -261,7 +287,7 @@ export default function PerformanceBlocks() {
         </div>
 
         {/* Block Types Reference */}
-        <div className="grid md:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-3 gap-4" data-tour="block-types">
           {BLOCK_TYPES.map(type => (
             <Card key={type.value} className={`bg-card border-border block-${type.value}`}>
               <CardContent className="pt-6">
@@ -276,7 +302,7 @@ export default function PerformanceBlocks() {
         </div>
 
         {/* Weekly Schedule */}
-        <Card className="bg-card border-border">
+        <Card className="bg-card border-border" data-tour="weekly-schedule">
           <CardHeader>
             <CardTitle>Weekly Schedule</CardTitle>
             <CardDescription>
