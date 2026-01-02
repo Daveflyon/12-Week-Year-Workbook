@@ -215,9 +215,16 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-border py-8">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground space-y-1">
+        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground space-y-3">
           <p>Based on "The 12 Week Year" by Brian P. Moran and Michael Lennington</p>
-          <p>Designed by Hiturn Media</p>
+          <a 
+            href="https://hiturnmedia.com" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 hover:opacity-80 transition-opacity"
+          >
+            <img src="/hiturn-media-logo.png" alt="Hiturn Media" className="h-6" />
+          </a>
         </div>
       </footer>
     </div>

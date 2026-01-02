@@ -234,6 +234,15 @@ function AppLayoutContent({
           </SidebarContent>
 
           <SidebarFooter className="p-3">
+            {/* Hiturn Media Credit */}
+            <a 
+              href="https://hiturnmedia.com" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="flex items-center justify-center mb-2 opacity-60 hover:opacity-100 transition-opacity group-data-[collapsible=icon]:hidden"
+            >
+              <img src="/hiturn-media-logo.png" alt="Hiturn Media" className="h-5" />
+            </a>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 rounded-lg px-1 py-1 hover:bg-accent/20 transition-colors w-full text-left group-data-[collapsible=icon]:justify-center focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
