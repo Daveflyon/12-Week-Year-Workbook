@@ -40,3 +40,4 @@
 - [x] Add Hiturn Media clickable link to footer
 - [x] Add Hiturn Media logo to footer
 - [x] Add Hiturn Media credit to dashboard sidebar footer
+- [x] Fix reminder.get query returning undefined instead of null

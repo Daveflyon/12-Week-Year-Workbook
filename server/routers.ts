@@ -429,7 +429,8 @@ export const appRouter = router({
   // Reminder settings
   reminder: router({
     get: protectedProcedure.query(async ({ ctx }) => {
-      return db.getReminderSettings(ctx.user.id);
+      const settings = await db.getReminderSettings(ctx.user.id);
+      return settings ?? null;
     }),
     
     upsert: protectedProcedure
