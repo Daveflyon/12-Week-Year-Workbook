@@ -41,3 +41,4 @@
 - [x] Add Hiturn Media logo to footer
 - [x] Add Hiturn Media credit to dashboard sidebar footer
 - [x] Fix reminder.get query returning undefined instead of null
+- [x] Fix onboarding modal mobile responsiveness - Next button cut off on mobile

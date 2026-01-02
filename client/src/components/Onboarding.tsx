@@ -118,11 +118,11 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <Card className="max-w-2xl w-full bg-card border-border shadow-2xl">
-        <CardContent className="p-0">
-          {/* Progress indicator */}
-          <div className="flex gap-1 p-4 pb-0">
+    <div className="fixed inset-0 bg-background/95 backdrop-blur-sm z-50 flex items-center justify-center p-4 pb-safe">
+      <Card className="max-w-2xl w-full bg-card border-border shadow-2xl max-h-[calc(100dvh-2rem)] flex flex-col">
+        <CardContent className="p-0 flex flex-col h-full overflow-hidden">
+          {/* Progress indicator - fixed at top */}
+          <div className="flex gap-1 p-4 pb-0 shrink-0">
             {ONBOARDING_STEPS.map((_, index) => (
               <div
                 key={index}
@@ -133,68 +133,78 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
             ))}
           </div>
 
-          {/* Content */}
-          <div className="p-8">
+          {/* Scrollable content area */}
+          <div className="flex-1 overflow-y-auto p-6 sm:p-8">
             {/* Icon and title */}
-            <div className="flex items-center gap-4 mb-6">
-              <div className="h-14 w-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-                <Icon className="h-7 w-7 text-primary" />
+            <div className="flex items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+              <div className="h-12 w-12 sm:h-14 sm:w-14 rounded-2xl bg-primary/10 flex items-center justify-center shrink-0">
+                <Icon className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
               </div>
               <div>
-                <h2 className="text-2xl font-bold">{step.title}</h2>
-                <p className="text-muted-foreground">{step.subtitle}</p>
+                <h2 className="text-xl sm:text-2xl font-bold">{step.title}</h2>
+                <p className="text-sm sm:text-base text-muted-foreground">{step.subtitle}</p>
               </div>
             </div>
 
             {/* Main content */}
-            <div className="space-y-4 mb-6">
-              <p className="text-foreground/90 whitespace-pre-line leading-relaxed">
+            <div className="space-y-4 mb-4 sm:mb-6">
+              <p className="text-sm sm:text-base text-foreground/90 whitespace-pre-line leading-relaxed">
                 {step.content}
               </p>
             </div>
 
             {/* Quote */}
-            <div className="quote-card mb-8">
+            <div className="quote-card">
               <Quote className="h-4 w-4 text-primary/40 mb-2" />
-              <p className="text-sm italic text-foreground/80">"{step.quote}"</p>
+              <p className="text-xs sm:text-sm italic text-foreground/80">"{step.quote}"</p>
               <p className="text-xs text-primary mt-2">— {step.quoteSource}</p>
             </div>
+          </div>
 
-            {/* Navigation */}
-            <div className="flex items-center justify-between">
+          {/* Navigation - fixed at bottom */}
+          <div className="shrink-0 border-t border-border p-4 sm:p-6 bg-card">
+            <div className="flex items-center justify-between gap-2">
               <div className="flex gap-2">
                 {currentStep > 0 && (
-                  <Button variant="ghost" onClick={handlePrev}>
-                    <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back
+                  <Button variant="ghost" size="sm" onClick={handlePrev} className="px-2 sm:px-4">
+                    <ArrowLeft className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Back</span>
                   </Button>
                 )}
               </div>
 
-              <div className="flex items-center gap-3">
-                <span className="text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <span className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap">
                   {currentStep + 1} of {ONBOARDING_STEPS.length}
                 </span>
                 
                 {!isLastStep && (
-                  <Button variant="ghost" onClick={handleSkip} className="text-muted-foreground">
-                    Skip intro
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={handleSkip} 
+                    className="text-muted-foreground px-2 sm:px-4"
+                  >
+                    <span className="hidden sm:inline">Skip intro</span>
+                    <span className="sm:hidden">Skip</span>
                   </Button>
                 )}
                 
                 <Button 
                   onClick={handleNext}
-                  className="gradient-primary text-primary-foreground"
+                  size="sm"
+                  className="gradient-primary text-primary-foreground px-3 sm:px-4"
                 >
                   {isLastStep ? (
                     <>
-                      Get Started
-                      <Rocket className="h-4 w-4 ml-2" />
+                      <span className="hidden sm:inline">Get Started</span>
+                      <span className="sm:hidden">Start</span>
+                      <Rocket className="h-4 w-4 ml-1 sm:ml-2" />
                     </>
                   ) : (
                     <>
                       Next
-                      <ArrowRight className="h-4 w-4 ml-2" />
+                      <ArrowRight className="h-4 w-4 ml-1 sm:ml-2" />
                     </>
                   )}
                 </Button>
