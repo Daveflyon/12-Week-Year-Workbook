@@ -220,7 +220,7 @@ export default function PerformanceBlocks() {
 
   if (!activeCycle) {
     return (
-      <AppLayout>
+      <AppLayout currentPage="blocks">
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
           <Clock className="h-16 w-16 text-muted-foreground/40 mb-4" />
           <h2 className="text-xl font-semibold mb-2">No Active Cycle</h2>
@@ -231,7 +231,7 @@ export default function PerformanceBlocks() {
   }
 
   return (
-    <AppLayout>
+    <AppLayout currentPage="blocks">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

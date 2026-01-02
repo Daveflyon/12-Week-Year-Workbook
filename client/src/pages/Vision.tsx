@@ -74,7 +74,7 @@ export default function Vision() {
 
   if (!activeCycle) {
     return (
-      <AppLayout>
+      <AppLayout currentPage="vision">
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
           <Eye className="h-16 w-16 text-muted-foreground/40 mb-4" />
           <h2 className="text-xl font-semibold mb-2">No Active Cycle</h2>
@@ -85,7 +85,7 @@ export default function Vision() {
   }
 
   return (
-    <AppLayout>
+    <AppLayout currentPage="vision">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

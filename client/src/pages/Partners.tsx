@@ -65,7 +65,7 @@ export default function Partners() {
   };
 
   return (
-    <AppLayout>
+    <AppLayout currentPage="partners">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

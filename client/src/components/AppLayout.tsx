@@ -1,4 +1,5 @@
 import { useAuth } from "@/_core/hooks/useAuth";
+import HelpDialog from "./HelpDialog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -60,8 +61,12 @@ const MAX_WIDTH = 400;
 
 export default function AppLayout({
   children,
+  currentPage,
+  showIntro,
 }: {
   children: React.ReactNode;
+  currentPage?: string;
+  showIntro?: () => void;
 }) {
   const [sidebarWidth, setSidebarWidth] = useState(() => {
     const saved = localStorage.getItem(SIDEBAR_WIDTH_KEY);
@@ -122,7 +127,7 @@ export default function AppLayout({
         } as CSSProperties
       }
     >
-      <AppLayoutContent setSidebarWidth={setSidebarWidth}>
+      <AppLayoutContent setSidebarWidth={setSidebarWidth} currentPage={currentPage} showIntro={showIntro}>
         {children}
       </AppLayoutContent>
     </SidebarProvider>
@@ -132,11 +137,15 @@ export default function AppLayout({
 type AppLayoutContentProps = {
   children: React.ReactNode;
   setSidebarWidth: (width: number) => void;
+  currentPage?: string;
+  showIntro?: () => void;
 };
 
 function AppLayoutContent({
   children,
   setSidebarWidth,
+  currentPage,
+  showIntro,
 }: AppLayoutContentProps) {
   const { user, logout } = useAuth();
   const [location, setLocation] = useLocation();
@@ -201,10 +210,11 @@ function AppLayoutContent({
                 <PanelLeft className="h-4 w-4 text-muted-foreground" />
               </button>
               {!isCollapsed ? (
-                <div className="flex items-center gap-2 min-w-0">
+                <div className="flex items-center justify-between flex-1 min-w-0">
                   <span className="font-semibold tracking-tight truncate text-gradient">
                     12 Week Year
                   </span>
+                  <HelpDialog currentPage={currentPage} showIntro={showIntro} />
                 </div>
               ) : null}
             </div>
@@ -296,6 +306,7 @@ function AppLayoutContent({
                 </div>
               </div>
             </div>
+            <HelpDialog currentPage={currentPage} showIntro={showIntro} />
           </div>
         )}
         <main className="flex-1 p-6 overflow-auto">{children}</main>

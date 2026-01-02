@@ -113,7 +113,7 @@ export default function CycleReview() {
 
   if (!activeCycle) {
     return (
-      <AppLayout>
+      <AppLayout currentPage="review">
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
           <FileText className="h-16 w-16 text-muted-foreground/40 mb-4" />
           <h2 className="text-xl font-semibold mb-2">No Active Cycle</h2>
@@ -124,7 +124,7 @@ export default function CycleReview() {
   }
 
   return (
-    <AppLayout>
+    <AppLayout currentPage="review">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

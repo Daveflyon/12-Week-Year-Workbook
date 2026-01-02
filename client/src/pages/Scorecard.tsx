@@ -177,7 +177,7 @@ export default function Scorecard() {
 
   if (!activeCycle) {
     return (
-      <AppLayout>
+      <AppLayout currentPage="scorecard">
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
           <ClipboardCheck className="h-16 w-16 text-muted-foreground/40 mb-4" />
           <h2 className="text-xl font-semibold mb-2">No Active Cycle</h2>
@@ -188,7 +188,7 @@ export default function Scorecard() {
   }
 
   return (
-    <AppLayout>
+    <AppLayout currentPage="scorecard">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">

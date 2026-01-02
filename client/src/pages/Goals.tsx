@@ -372,7 +372,7 @@ export default function Goals() {
 
   if (!activeCycle) {
     return (
-      <AppLayout>
+      <AppLayout currentPage="goals">
         <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
           <Target className="h-16 w-16 text-muted-foreground/40 mb-4" />
           <h2 className="text-xl font-semibold mb-2">No Active Cycle</h2>
@@ -383,7 +383,7 @@ export default function Goals() {
   }
 
   return (
-    <AppLayout>
+    <AppLayout currentPage="goals">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">

@@ -42,3 +42,8 @@
 - [x] Add Hiturn Media credit to dashboard sidebar footer
 - [x] Fix reminder.get query returning undefined instead of null
 - [x] Fix onboarding modal mobile responsiveness - Next button cut off on mobile
+
+## Help System (Phase 3)
+- [x] Add help button to access onboarding guide anytime
+- [x] Create contextual help for each screen
+- [x] Allow users to replay intro from help menu

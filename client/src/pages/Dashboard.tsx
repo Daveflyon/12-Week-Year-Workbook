@@ -145,6 +145,10 @@ export default function Dashboard() {
     localStorage.setItem(ONBOARDING_KEY, 'true');
     setShowOnboarding(false);
   };
+
+  const handleShowIntro = () => {
+    setShowOnboarding(true);
+  };
   
   const { data: cycles, isLoading: cyclesLoading } = trpc.cycle.list.useQuery();
   
@@ -162,7 +166,7 @@ export default function Dashboard() {
 
   if (cyclesLoading) {
     return (
-      <AppLayout>
+      <AppLayout currentPage="dashboard" showIntro={handleShowIntro}>
         <div className="animate-pulse space-y-6">
           <div className="h-8 w-48 bg-muted rounded" />
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -180,7 +184,7 @@ export default function Dashboard() {
     return (
       <>
         <Onboarding onComplete={handleOnboardingComplete} />
-        <AppLayout>
+        <AppLayout currentPage="dashboard" showIntro={handleShowIntro}>
           <CreateCyclePrompt />
         </AppLayout>
       </>
@@ -189,7 +193,7 @@ export default function Dashboard() {
 
   if (!cycles || cycles.length === 0) {
     return (
-      <AppLayout>
+      <AppLayout currentPage="dashboard" showIntro={handleShowIntro}>
         <CreateCyclePrompt />
       </AppLayout>
     );
@@ -218,7 +222,7 @@ export default function Dashboard() {
   }
 
   return (
-    <AppLayout>
+    <AppLayout currentPage="dashboard" showIntro={handleShowIntro}>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
