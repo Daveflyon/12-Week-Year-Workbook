@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { trpc } from "@/lib/trpc";
-import { FileText, Save, Quote, Target, TrendingUp, AlertTriangle, Lightbulb, ArrowLeft } from "lucide-react";
+import { FileText, Save, Quote, Target, TrendingUp, AlertTriangle, Lightbulb, ArrowLeft, Download } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useParams, useLocation } from "wouter";
 import { toast } from "sonner";
@@ -45,6 +45,25 @@ export default function CycleReview() {
 
   const upsertReview = trpc.cycleReview.upsert.useMutation();
   const utils = trpc.useUtils();
+
+  const handleExportPDF = async () => {
+    if (!activeCycle) return;
+    try {
+      const response = await fetch(`/api/trpc/export.cycleReview?input=${encodeURIComponent(JSON.stringify({ cycleId: activeCycle.id, reviewType }))}`);
+      const data = await response.json();
+      const html = data.result?.data?.html;
+      if (html) {
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(html);
+          printWindow.document.close();
+          printWindow.print();
+        }
+      }
+    } catch (error) {
+      toast.error("Failed to export review");
+    }
+  };
 
   useEffect(() => {
     if (review) {
@@ -125,14 +144,23 @@ export default function CycleReview() {
             </h1>
             <p className="text-muted-foreground mt-1">{description}</p>
           </div>
-          <Button 
-            onClick={handleSave}
-            disabled={upsertReview.isPending}
-            className="gradient-primary text-primary-foreground"
-          >
-            <Save className="mr-2 h-4 w-4" />
-            Save Review
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={handleExportPDF}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export PDF
+            </Button>
+            <Button 
+              onClick={handleSave}
+              disabled={upsertReview.isPending}
+              className="gradient-primary text-primary-foreground"
+            >
+              <Save className="mr-2 h-4 w-4" />
+              Save Review
+            </Button>
+          </div>
         </div>
 
         {/* Quote Card */}

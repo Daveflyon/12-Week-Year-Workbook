@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Settings as SettingsIcon, Bell, Save, Calendar, Clock, Quote, Plus } from "lucide-react";
+import { Settings as SettingsIcon, Bell, Save, Calendar, Clock, Quote, Plus, Send } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { getRandomQuote } from "@shared/quotes";
@@ -31,7 +31,21 @@ export default function Settings() {
 
   const upsertReminder = trpc.reminder.upsert.useMutation();
   const createCycle = trpc.cycle.create.useMutation();
+  const testNotification = trpc.notification.testNotification.useMutation();
   const utils = trpc.useUtils();
+
+  const handleTestNotification = async () => {
+    try {
+      const result = await testNotification.mutateAsync();
+      if (result.success) {
+        toast.success("Test notification sent! Check your notifications.");
+      } else {
+        toast.error("Notification service unavailable. Please try again later.");
+      }
+    } catch (error) {
+      toast.error("Failed to send test notification");
+    }
+  };
 
   useEffect(() => {
     if (reminder) {
@@ -260,6 +274,36 @@ export default function Settings() {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Test Notifications */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5 text-primary" />
+              Test Notifications
+            </CardTitle>
+            <CardDescription>
+              Verify your notification settings are working
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
+              <div>
+                <p className="font-medium">Send Test Notification</p>
+                <p className="text-sm text-muted-foreground">
+                  Send a test notification to verify everything is set up correctly
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={handleTestNotification}
+                disabled={testNotification.isPending}
+              >
+                {testNotification.isPending ? "Sending..." : "Test"}
+              </Button>
+            </div>
           </CardContent>
         </Card>
 

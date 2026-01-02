@@ -14,6 +14,7 @@ import WeeklyReview from "./pages/WeeklyReview";
 import CycleReview from "./pages/CycleReview";
 import Checklist from "./pages/Checklist";
 import Settings from "./pages/Settings";
+import Partners from "./pages/Partners";
 
 function Router() {
   return (
@@ -30,6 +31,7 @@ function Router() {
       <Route path="/cycle-review/:reviewType" component={CycleReview} />
       <Route path="/checklist" component={Checklist} />
       <Route path="/settings" component={Settings} />
+      <Route path="/partners" component={Partners} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>

@@ -19,6 +19,7 @@ import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from "recharts";
 import { BOOK_QUOTES, FLASHCARDS, getRandomQuote, getRandomFlashcard } from "@shared/quotes";
+import Onboarding from "@/components/Onboarding";
 
 function FlashcardWidget() {
   const [flipped, setFlipped] = useState(false);
@@ -129,8 +130,22 @@ function CreateCyclePrompt() {
   );
 }
 
+const ONBOARDING_KEY = '12wy_onboarding_complete';
+
 export default function Dashboard() {
   const [, setLocation] = useLocation();
+  const [showOnboarding, setShowOnboarding] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return !localStorage.getItem(ONBOARDING_KEY);
+    }
+    return false;
+  });
+  
+  const handleOnboardingComplete = () => {
+    localStorage.setItem(ONBOARDING_KEY, 'true');
+    setShowOnboarding(false);
+  };
+  
   const { data: cycles, isLoading: cyclesLoading } = trpc.cycle.list.useQuery();
   
   const activeCycle = cycles?.find(c => c.status === 'active') || cycles?.[0];
@@ -157,6 +172,18 @@ export default function Dashboard() {
           </div>
         </div>
       </AppLayout>
+    );
+  }
+
+  // Show onboarding for new users
+  if (showOnboarding) {
+    return (
+      <>
+        <Onboarding onComplete={handleOnboardingComplete} />
+        <AppLayout>
+          <CreateCyclePrompt />
+        </AppLayout>
+      </>
     );
   }
 

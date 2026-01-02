@@ -13,7 +13,9 @@ import {
   checklistItems, InsertChecklistItem, ChecklistItem,
   cycleReviews, InsertCycleReview, CycleReview,
   reminderSettings, InsertReminderSetting, ReminderSetting,
-  flashcardViews, InsertFlashcardView
+  flashcardViews, InsertFlashcardView,
+  accountabilityPartners, InsertAccountabilityPartner, AccountabilityPartner,
+  wamRecords, InsertWamRecord, WamRecord
 } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
@@ -449,4 +451,105 @@ export async function getUserAverageExecutionScore(userId: number): Promise<numb
   if (!db) return 0;
   const result = await db.select({ avg: sql<number>`AVG(CAST(${weeklyScores.executionScore} AS DECIMAL(5,2)))` }).from(weeklyScores).where(eq(weeklyScores.userId, userId));
   return result[0]?.avg ?? 0;
+}
+
+// Accountability Partner functions
+export async function createPartner(partner: InsertAccountabilityPartner): Promise<AccountabilityPartner> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(accountabilityPartners).values(partner);
+  const created = await db.select().from(accountabilityPartners).where(eq(accountabilityPartners.id, result[0].insertId)).limit(1);
+  return created[0];
+}
+
+export async function getPartnersByUser(userId: number): Promise<AccountabilityPartner[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(accountabilityPartners).where(eq(accountabilityPartners.userId, userId));
+}
+
+export async function getPartnerByToken(token: string): Promise<AccountabilityPartner | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(accountabilityPartners).where(eq(accountabilityPartners.inviteToken, token)).limit(1);
+  return result[0];
+}
+
+export async function updatePartner(id: number, userId: number, data: Partial<InsertAccountabilityPartner>): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(accountabilityPartners).set(data).where(and(eq(accountabilityPartners.id, id), eq(accountabilityPartners.userId, userId)));
+}
+
+export async function deletePartner(id: number, userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(accountabilityPartners).where(and(eq(accountabilityPartners.id, id), eq(accountabilityPartners.userId, userId)));
+}
+
+export async function getPartnerById(id: number, userId: number): Promise<AccountabilityPartner | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(accountabilityPartners).where(and(eq(accountabilityPartners.id, id), eq(accountabilityPartners.userId, userId))).limit(1);
+  return result[0];
+}
+
+// WAM Record functions
+export async function createWamRecord(record: InsertWamRecord): Promise<WamRecord> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const result = await db.insert(wamRecords).values(record);
+  const created = await db.select().from(wamRecords).where(eq(wamRecords.id, result[0].insertId)).limit(1);
+  return created[0];
+}
+
+export async function getWamRecordsByCycle(cycleId: number, userId: number): Promise<WamRecord[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(wamRecords).where(and(eq(wamRecords.cycleId, cycleId), eq(wamRecords.userId, userId))).orderBy(wamRecords.weekNumber);
+}
+
+export async function getWamRecord(cycleId: number, userId: number, weekNumber: number): Promise<WamRecord | undefined> {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(wamRecords).where(
+    and(eq(wamRecords.cycleId, cycleId), eq(wamRecords.userId, userId), eq(wamRecords.weekNumber, weekNumber))
+  ).limit(1);
+  return result[0];
+}
+
+export async function upsertWamRecord(record: InsertWamRecord): Promise<WamRecord> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+  const existing = await db.select().from(wamRecords).where(
+    and(eq(wamRecords.cycleId, record.cycleId), eq(wamRecords.userId, record.userId), eq(wamRecords.weekNumber, record.weekNumber))
+  ).limit(1);
+  if (existing.length > 0) {
+    await db.update(wamRecords).set(record).where(eq(wamRecords.id, existing[0].id));
+    const updated = await db.select().from(wamRecords).where(eq(wamRecords.id, existing[0].id)).limit(1);
+    return updated[0];
+  } else {
+    const result = await db.insert(wamRecords).values(record);
+    const created = await db.select().from(wamRecords).where(eq(wamRecords.id, result[0].insertId)).limit(1);
+    return created[0];
+  }
+}
+
+// Get shared progress for a partner (what they can see about the user)
+export async function getSharedProgressForPartner(userId: number, cycleId: number): Promise<{
+  weeklyScores: WeeklyScore[];
+  goals: Goal[];
+}> {
+  const db = await getDb();
+  if (!db) return { weeklyScores: [], goals: [] };
+  
+  const scores = await db.select().from(weeklyScores).where(
+    and(eq(weeklyScores.userId, userId), eq(weeklyScores.cycleId, cycleId))
+  ).orderBy(weeklyScores.weekNumber);
+  
+  const userGoals = await db.select().from(goals).where(
+    and(eq(goals.userId, userId), eq(goals.cycleId, cycleId))
+  );
+  
+  return { weeklyScores: scores, goals: userGoals };
 }

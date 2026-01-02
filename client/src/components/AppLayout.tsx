@@ -33,7 +33,8 @@ import {
   FileText,
   CheckSquare,
   Settings,
-  Sparkles
+  Sparkles,
+  Users
 } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
@@ -47,6 +48,7 @@ const menuItems = [
   { icon: ClipboardCheck, label: "Weekly Scorecard", path: "/scorecard" },
   { icon: Clock, label: "Performance Blocks", path: "/blocks" },
   { icon: FileText, label: "Weekly Review", path: "/review" },
+  { icon: Users, label: "Accountability Partners", path: "/partners" },
   { icon: CheckSquare, label: "Pre-Cycle Checklist", path: "/checklist" },
   { icon: Settings, label: "Settings", path: "/settings" },
 ];

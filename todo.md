@@ -25,3 +25,11 @@
 - [x] Frontend pages and components
 - [x] Elegant styling with dark theme
 - [x] Unit tests for critical functionality
+
+## New Features (Phase 2)
+- [x] Onboarding intro/overview for new users
+- [x] Email/push notification delivery for reminders
+- [x] PDF export for scorecards and cycle reviews
+- [x] Accountability partner sharing feature
+- [x] WAM (Weekly Accountability Meeting) scheduling
+- [x] Partner invitation system with sharing settings

@@ -2,6 +2,8 @@ import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
+import { notifyOwner } from "./_core/notification";
+import { generateScorecardHTML, generateCycleReviewHTML } from "./pdfExport";
 import { z } from "zod";
 import * as db from "./db";
 
@@ -506,6 +508,236 @@ export const appRouter = router({
           globalAverageScore: globalAvg,
           targetThreshold: 85,
         };
+      }),
+  }),
+
+  // PDF Export
+  export: router({
+    weeklyScorecard: protectedProcedure
+      .input(z.object({
+        cycleId: z.number(),
+        weekNumber: z.number(),
+      }))
+      .query(async ({ ctx, input }) => {
+        const cycle = await db.getCycleById(input.cycleId, ctx.user.id);
+        if (!cycle) throw new Error("Cycle not found");
+        
+        const scorecard = await db.getWeeklyScore(input.cycleId, ctx.user.id, input.weekNumber);
+        const goals = await db.getGoalsByCycle(input.cycleId, ctx.user.id);
+        
+        // Get tactics for all goals
+        const allTactics: { title: string; weeklyTarget: number; completed: number }[] = [];
+        for (const goal of goals) {
+          const tactics = await db.getTacticsByGoal(goal.id, ctx.user.id);
+          for (const tactic of tactics) {
+            const entries = await db.getTacticEntriesByWeek(tactic.id, ctx.user.id, input.weekNumber);
+            const completed = entries.filter(e => e.completed).length;
+            allTactics.push({
+              title: tactic.title,
+              weeklyTarget: tactic.weeklyTarget ?? 7,
+              completed,
+            });
+          }
+        }
+        
+        const html = generateScorecardHTML({
+          weekNumber: input.weekNumber,
+          executionScore: scorecard?.executionScore ?? "0",
+          tactics: allTactics,
+        }, cycle.title);
+        
+        return { html };
+      }),
+    
+    cycleReview: protectedProcedure
+      .input(z.object({
+        cycleId: z.number(),
+        reviewType: z.enum(["mid_cycle", "final"]),
+      }))
+      .query(async ({ ctx, input }) => {
+        const cycle = await db.getCycleById(input.cycleId, ctx.user.id);
+        if (!cycle) throw new Error("Cycle not found");
+        
+        const review = await db.getCycleReview(input.cycleId, ctx.user.id, input.reviewType);
+        const goals = await db.getGoalsByCycle(input.cycleId, ctx.user.id);
+        const weeklyScores = await db.getWeeklyScoresByCycle(input.cycleId, ctx.user.id);
+        
+        const avgScore = weeklyScores.length > 0
+          ? weeklyScores.reduce((sum: number, s: { executionScore?: string | null }) => sum + parseFloat(s.executionScore ?? "0"), 0) / weeklyScores.length
+          : 0;
+        
+        const html = generateCycleReviewHTML({
+          cycleTitle: cycle.title,
+          startDate: cycle.startDate,
+          endDate: cycle.endDate,
+          reviewType: input.reviewType,
+          averageExecutionScore: avgScore.toString(),
+          greatestSuccess: review?.greatestSuccess ?? "",
+          biggestObstacle: review?.biggestObstacle ?? "",
+          mostEffectiveTactic: review?.mostEffectiveTactic ?? "",
+          pitfallsEncountered: review?.pitfallsEncountered ?? "",
+          adjustmentsForNextCycle: review?.adjustmentsForNextCycle ?? "",
+          lessonsLearned: review?.lessonsLearned ?? "",
+          weeklyScores: weeklyScores.map((s: { weekNumber: number; executionScore?: string | null }) => ({
+            weekNumber: s.weekNumber,
+            score: parseFloat(s.executionScore ?? "0"),
+          })),
+          goals: goals.map(g => ({
+            title: g.title,
+            lagIndicator: g.lagIndicator ?? "",
+            lagTarget: g.lagTarget ?? "",
+            lagCurrentValue: g.lagCurrentValue ?? "",
+          })),
+        });
+        
+        return { html };
+      }),
+  }),
+
+  // Accountability Partners
+  partner: router({
+    list: protectedProcedure.query(async ({ ctx }) => {
+      return db.getPartnersByUser(ctx.user.id);
+    }),
+    
+    create: protectedProcedure
+      .input(z.object({
+        partnerEmail: z.string().email(),
+        partnerName: z.string().optional(),
+        shareProgress: z.boolean().optional(),
+        shareGoals: z.boolean().optional(),
+        wamDay: z.number().min(0).max(6).optional(),
+        wamTime: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const inviteToken = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+        return db.createPartner({
+          userId: ctx.user.id,
+          partnerEmail: input.partnerEmail,
+          partnerName: input.partnerName,
+          shareProgress: input.shareProgress ?? true,
+          shareGoals: input.shareGoals ?? true,
+          wamDay: input.wamDay ?? 0,
+          wamTime: input.wamTime ?? "10:00",
+          inviteToken,
+          status: "pending",
+        });
+      }),
+    
+    update: protectedProcedure
+      .input(z.object({
+        id: z.number(),
+        partnerName: z.string().optional(),
+        shareProgress: z.boolean().optional(),
+        shareGoals: z.boolean().optional(),
+        wamDay: z.number().optional(),
+        wamTime: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { id, ...data } = input;
+        await db.updatePartner(id, ctx.user.id, data);
+        return { success: true };
+      }),
+    
+    delete: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deletePartner(input.id, ctx.user.id);
+        return { success: true };
+      }),
+    
+    getSharedProgress: protectedProcedure
+      .input(z.object({ partnerId: z.number(), cycleId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const partner = await db.getPartnerById(input.partnerId, ctx.user.id);
+        if (!partner || !partner.partnerUserId) {
+          return null;
+        }
+        return db.getSharedProgressForPartner(partner.partnerUserId, input.cycleId);
+      }),
+  }),
+
+  // WAM Records
+  wam: router({
+    get: protectedProcedure
+      .input(z.object({ cycleId: z.number(), weekNumber: z.number() }))
+      .query(async ({ ctx, input }) => {
+        return db.getWamRecord(input.cycleId, ctx.user.id, input.weekNumber);
+      }),
+    
+    list: protectedProcedure
+      .input(z.object({ cycleId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        return db.getWamRecordsByCycle(input.cycleId, ctx.user.id);
+      }),
+    
+    upsert: protectedProcedure
+      .input(z.object({
+        cycleId: z.number(),
+        weekNumber: z.number(),
+        partnerId: z.number().optional(),
+        meetingDate: z.date().optional(),
+        executionScoreShared: z.string().optional(),
+        winsShared: z.string().optional(),
+        challengesShared: z.string().optional(),
+        commitmentsForNextWeek: z.string().optional(),
+        partnerFeedback: z.string().optional(),
+        completed: z.boolean().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        return db.upsertWamRecord({
+          userId: ctx.user.id,
+          cycleId: input.cycleId,
+          weekNumber: input.weekNumber,
+          partnerId: input.partnerId,
+          meetingDate: input.meetingDate,
+          executionScoreShared: input.executionScoreShared,
+          winsShared: input.winsShared,
+          challengesShared: input.challengesShared,
+          commitmentsForNextWeek: input.commitmentsForNextWeek,
+          partnerFeedback: input.partnerFeedback,
+          completed: input.completed,
+        });
+      }),
+  }),
+
+  // Notification management
+  notification: router({
+    sendReminder: protectedProcedure
+      .input(z.object({
+        type: z.enum(["daily_scorecard", "weekly_review", "wam", "custom"]),
+        message: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const titles: Record<string, string> = {
+          daily_scorecard: "📊 Time to Update Your Scorecard",
+          weekly_review: "📝 Weekly Review Reminder",
+          wam: "🤝 Weekly Accountability Meeting",
+          custom: "🎯 12 Week Year Reminder",
+        };
+        
+        const messages: Record<string, string> = {
+          daily_scorecard: "Don't forget to log your daily execution! Track your lead indicators to stay on target for 85%.",
+          weekly_review: "Time to reflect on your week. What worked? What needs adjustment? Complete your weekly review now.",
+          wam: "Schedule your Weekly Accountability Meeting to stay on track with your 12-week goals.",
+          custom: input.message || "Stay focused on your 12-week goals!",
+        };
+        
+        const success = await notifyOwner({
+          title: titles[input.type],
+          content: messages[input.type],
+        });
+        
+        return { success };
+      }),
+    
+    testNotification: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        const success = await notifyOwner({
+          title: "🎯 12 Week Year - Test Notification",
+          content: "Your notifications are working! You'll receive reminders based on your settings.",
+        });
+        return { success };
       }),
   }),
 });

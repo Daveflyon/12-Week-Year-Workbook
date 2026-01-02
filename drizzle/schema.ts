@@ -218,3 +218,44 @@ export const flashcardViews = mysqlTable("flashcardViews", {
 
 export type FlashcardView = typeof flashcardViews.$inferSelect;
 export type InsertFlashcardView = typeof flashcardViews.$inferInsert;
+
+// Accountability Partners
+export const accountabilityPartners = mysqlTable("accountabilityPartners", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(), // The user who owns this partnership
+  partnerEmail: varchar("partnerEmail", { length: 320 }).notNull(),
+  partnerName: varchar("partnerName", { length: 255 }),
+  partnerUserId: int("partnerUserId"), // If the partner is also a user
+  status: mysqlEnum("status", ["pending", "accepted", "declined"]).default("pending").notNull(),
+  shareProgress: boolean("shareProgress").default(true), // Share execution scores
+  shareGoals: boolean("shareGoals").default(true), // Share goal details
+  wamDay: int("wamDay").default(0), // Day of week for WAM (0=Sunday)
+  wamTime: varchar("wamTime", { length: 10 }), // HH:MM format
+  inviteToken: varchar("inviteToken", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type AccountabilityPartner = typeof accountabilityPartners.$inferSelect;
+export type InsertAccountabilityPartner = typeof accountabilityPartners.$inferInsert;
+
+// WAM (Weekly Accountability Meeting) Records
+export const wamRecords = mysqlTable("wamRecords", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  partnerId: int("partnerId"), // Reference to accountabilityPartners
+  cycleId: int("cycleId").notNull(),
+  weekNumber: int("weekNumber").notNull(),
+  meetingDate: timestamp("meetingDate"),
+  executionScoreShared: decimal("executionScoreShared", { precision: 5, scale: 2 }),
+  winsShared: text("winsShared"),
+  challengesShared: text("challengesShared"),
+  commitmentsForNextWeek: text("commitmentsForNextWeek"),
+  partnerFeedback: text("partnerFeedback"),
+  completed: boolean("completed").default(false),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+
+export type WamRecord = typeof wamRecords.$inferSelect;
+export type InsertWamRecord = typeof wamRecords.$inferInsert;

@@ -6,7 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { trpc } from "@/lib/trpc";
-import { ClipboardCheck, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Quote, Save } from "lucide-react";
+import { ClipboardCheck, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Quote, Save, Download } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "wouter";
 import { toast } from "sonner";
@@ -59,6 +59,25 @@ export default function Scorecard() {
   const upsertEntry = trpc.tacticEntry.upsert.useMutation();
   const upsertWeeklyScore = trpc.weeklyScore.upsert.useMutation();
   const utils = trpc.useUtils();
+
+  const handleExportPDF = async () => {
+    if (!activeCycle) return;
+    try {
+      const response = await fetch(`/api/trpc/export.weeklyScorecard?input=${encodeURIComponent(JSON.stringify({ cycleId: activeCycle.id, weekNumber: selectedWeek }))}`);
+      const data = await response.json();
+      const html = data.result?.data?.html;
+      if (html) {
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(html);
+          printWindow.document.close();
+          printWindow.print();
+        }
+      }
+    } catch (error) {
+      toast.error("Failed to export scorecard");
+    }
+  };
 
   // Local state for entries
   const [localEntries, setLocalEntries] = useState<Record<string, number>>({});
@@ -182,14 +201,23 @@ export default function Scorecard() {
               Track your daily execution of lead indicators
             </p>
           </div>
-          <Button 
-            onClick={handleSave}
-            disabled={upsertEntry.isPending || upsertWeeklyScore.isPending}
-            className="gradient-primary text-primary-foreground"
-          >
-            <Save className="mr-2 h-4 w-4" />
-            Save Scorecard
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={handleExportPDF}
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export PDF
+            </Button>
+            <Button 
+              onClick={handleSave}
+              disabled={upsertEntry.isPending || upsertWeeklyScore.isPending}
+              className="gradient-primary text-primary-foreground"
+            >
+              <Save className="mr-2 h-4 w-4" />
+              Save Scorecard
+            </Button>
+          </div>
         </div>
 
         {/* Week Navigation */}
