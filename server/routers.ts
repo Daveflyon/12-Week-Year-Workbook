@@ -68,7 +68,8 @@ export const appRouter = router({
     get: protectedProcedure
       .input(z.object({ cycleId: z.number() }))
       .query(async ({ ctx, input }) => {
-        return db.getVisionByCycle(input.cycleId, ctx.user.id);
+        const vision = await db.getVisionByCycle(input.cycleId, ctx.user.id);
+        return vision ?? null;
       }),
     
     upsert: protectedProcedure

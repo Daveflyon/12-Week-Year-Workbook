@@ -33,3 +33,6 @@
 - [x] Accountability partner sharing feature
 - [x] WAM (Weekly Accountability Meeting) scheduling
 - [x] Partner invitation system with sharing settings
+
+## Bug Fixes
+- [x] Fix vision.get query returning undefined instead of null
