@@ -1,0 +1,120 @@
+{
+  "query": "SELECT * FROM checklistItems LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user iNhAe1dL1wzAkH4.root --database 7YT5AjFkoqfS5QKmXhFci2 --execute SELECT * FROM checklistItems LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "userId": "1",
+      "cycleId": "1",
+      "itemKey": "vision_reviewed",
+      "itemLabel": "Reviewed your 3-5 year vision to ensure new goals are aligned",
+      "isCompleted": "0",
+      "completedAt": "NULL",
+      "createdAt": "2026-01-02 12:00:08",
+      "updatedAt": "2026-01-02 12:00:08"
+    },
+    {
+      "id": "2",
+      "userId": "1",
+      "cycleId": "1",
+      "itemKey": "goal_limit_set",
+      "itemLabel": "Limited the number of primary 12-Week Goals to a maximum of 3",
+      "isCompleted": "0",
+      "completedAt": "NULL",
+      "createdAt": "2026-01-02 12:00:08",
+      "updatedAt": "2026-01-02 12:00:08"
+    },
+    {
+      "id": "3",
+      "userId": "1",
+      "cycleId": "1",
+      "itemKey": "tactics_quantified",
+      "itemLabel": "Every Lead Indicator is a specific, measurable action",
+      "isCompleted": "0",
+      "completedAt": "NULL",
+      "createdAt": "2026-01-02 12:00:09",
+      "updatedAt": "2026-01-02 12:00:09"
+    },
+    {
+      "id": "4",
+      "userId": "1",
+      "cycleId": "1",
+      "itemKey": "strategic_blocks_scheduled",
+      "itemLabel": "Blocked out Strategic Blocks (3+ hours of deep work) for the first 3 weeks",
+      "isCompleted": "0",
+      "completedAt": "NULL",
+      "createdAt": "2026-01-02 12:00:09",
+      "updatedAt": "2026-01-02 12:00:09"
+    },
+    {
+      "id": "5",
+      "userId": "1",
+      "cycleId": "1",
+      "itemKey": "execution_target_set",
+      "itemLabel": "Committed to the 85% Execution Score as your primary measure of success",
+      "isCompleted": "0",
+      "completedAt": "NULL",
+      "createdAt": "2026-01-02 12:00:10",
+      "updatedAt": "2026-01-02 12:00:10"
+    },
+    {
+      "id": "6",
+      "userId": "1",
+      "cycleId": "1",
+      "itemKey": "perfectionism_rejected",
+      "itemLabel": "Mentally accepted that the goal is consistent effort (85%), not flawless execution (100%)",
+      "isCompleted": "0",
+      "completedAt": "NULL",
+      "createdAt": "2026-01-02 12:00:10",
+      "updatedAt": "2026-01-02 12:00:10"
+    },
+    {
+      "id": "7",
+      "userId": "1",
+      "cycleId": "1",
+      "itemKey": "cycle_start_confirmed",
+      "itemLabel": "Confirmed the exact start date for Week 1, Day 1",
+      "isCompleted": "0",
+      "completedAt": "NULL",
+      "createdAt": "2026-01-02 12:00:11",
+      "updatedAt": "2026-01-02 12:00:11"
+    },
+    {
+      "id": "8",
+      "userId": "1",
+      "cycleId": "1",
+      "itemKey": "commitment_statement_written",
+      "itemLabel": "Written a personal commitment statement focusing on the 3 Principles",
+      "isCompleted": "0",
+      "completedAt": "NULL",
+      "createdAt": "2026-01-02 12:00:11",
+      "updatedAt": "2026-01-02 12:00:11"
+    },
+    {
+      "id": "9",
+      "userId": "1",
+      "cycleId": "2",
+      "itemKey": "vision_reviewed",
+      "itemLabel": "Reviewed your 3-5 year vision to ensure new goals are aligned",
+      "isCompleted": "0",
+      "completedAt": "NULL",
+      "createdAt": "2026-01-02 12:00:12",
+      "updatedAt": "2026-01-02 12:00:12"
+    },
+    {
+      "id": "10",
+      "userId": "1",
+      "cycleId": "2",
+      "itemKey": "goal_limit_set",
+      "itemLabel": "Limited the number of primary 12-Week Goals to a maximum of 3",
+      "isCompleted": "0",
+      "completedAt": "NULL",
+      "createdAt": "2026-01-02 12:00:12",
+      "updatedAt": "2026-01-02 12:00:12"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\tcycleId\titemKey\titemLabel\tisCompleted\tcompletedAt\tcreatedAt\tupdatedAt\n1\t1\t1\tvision_reviewed\tReviewed your 3-5 year vision to ensure new goals are aligned\t0\tNULL\t2026-01-02 12:00:08\t2026-01-02 12:00:08\n2\t1\t1\tgoal_limit_set\tLimited the number of primary 12-Week Goals to a maximum of 3\t0\tNULL\t2026-01-02 12:00:08\t2026-01-02 12:00:08\n3\t1\t1\ttactics_quantified\tEvery Lead Indicator is a specific, measurable action\t0\tNULL\t2026-01-02 12:00:09\t2026-01-02 12:00:09\n4\t1\t1\tstrategic_blocks_scheduled\tBlocked out Strategic Blocks (3+ hours of deep work) for the first 3 weeks\t0\tNULL\t2026-01-02 12:00:09\t2026-01-02 12:00:09\n5\t1\t1\texecution_target_set\tCommitted to the 85% Execution Score as your primary measure of success\t0\tNULL\t2026-01-02 12:00:10\t2026-01-02 12:00:10\n6\t1\t1\tperfectionism_rejected\tMentally accepted that the goal is consistent effort (85%), not flawless execution (100%)\t0\tNULL\t2026-01-02 12:00:10\t2026-01-02 12:00:10\n7\t1\t1\tcycle_start_confirmed\tConfirmed the exact start date for Week 1, Day 1\t0\tNULL\t2026-01-02 12:00:11\t2026-01-02 12:00:11\n8\t1\t1\tcommitment_statement_written\tWritten a personal commitment statement focusing on the 3 Principles\t0\tNULL\t2026-01-02 12:00:11\t2026-01-02 12:00:11\n9\t1\t2\tvision_reviewed\tReviewed your 3-5 year vision to ensure new goals are aligned\t0\tNULL\t2026-01-02 12:00:12\t2026-01-02 12:00:12\n10\t1\t2\tgoal_limit_set\tLimited the number of primary 12-Week Goals to a maximum of 3\t0\tNULL\t2026-01-02 12:00:12\t2026-01-02 12:00:12\n",
+  "stderr": "",
+  "execution_time_ms": 1565
+}

@@ -57,3 +57,8 @@
 - [x] Add tooltips to Weekly Review page
 - [x] Store visited pages in localStorage to show tooltips only once
 - [x] Convert all text to British English spelling
+
+
+## Bug Fixes (Phase 5)
+- [x] Fix accountability partner invite not working after email sent (now sends notification to owner)
+- [x] Fix pre-cycle checklist checkboxes not clickable (was key mismatch between UI and DB)

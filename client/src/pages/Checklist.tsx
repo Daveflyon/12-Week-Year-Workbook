@@ -10,57 +10,6 @@ import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { getRandomQuote } from "@shared/quotes";
 
-const CHECKLIST_CATEGORIES = [
-  {
-    title: "Vision & Purpose",
-    items: [
-      { key: "vision_written", label: "I have written my 3-5 year vision" },
-      { key: "strategic_imperatives", label: "I have identified 2-3 strategic imperatives" },
-      { key: "commitment_statement", label: "I have created a personal commitment statement" },
-    ],
-  },
-  {
-    title: "Goal Setting",
-    items: [
-      { key: "goals_defined", label: "I have defined 1-3 SMART goals for this cycle" },
-      { key: "lag_indicators", label: "Each goal has a clear lag indicator (result)" },
-      { key: "goals_connected", label: "My goals connect to my vision and strategic imperatives" },
-    ],
-  },
-  {
-    title: "Tactics & Lead Indicators",
-    items: [
-      { key: "tactics_defined", label: "I have defined specific tactics for each goal" },
-      { key: "weekly_targets", label: "Each tactic has a weekly target" },
-      { key: "monday_test", label: "My tactics pass the Monday Morning Test (clear & actionable)" },
-    ],
-  },
-  {
-    title: "Time Blocking",
-    items: [
-      { key: "strategic_blocks", label: "I have scheduled Strategic Blocks (3+ hours for deep work)" },
-      { key: "buffer_blocks", label: "I have scheduled Buffer Blocks (for admin tasks)" },
-      { key: "breakout_blocks", label: "I have scheduled Breakout Blocks (for growth & recharge)" },
-    ],
-  },
-  {
-    title: "Accountability",
-    items: [
-      { key: "wam_scheduled", label: "I have a Weekly Accountability Meeting (WAM) scheduled" },
-      { key: "accountability_partner", label: "I have an accountability partner or group" },
-      { key: "scorecard_ready", label: "I understand how to use the weekly scorecard" },
-    ],
-  },
-  {
-    title: "Mindset",
-    items: [
-      { key: "understand_85", label: "I understand the 85% execution target rule" },
-      { key: "committed_12_weeks", label: "I am committed to treating these 12 weeks as a complete year" },
-      { key: "ready_discomfort", label: "I am ready to embrace productive tension" },
-    ],
-  },
-];
-
 export default function Checklist() {
   const [, setLocation] = useLocation();
   const [quote] = useState(() => getRandomQuote("commitment"));
@@ -105,11 +54,6 @@ export default function Checklist() {
     } catch (error) {
       toast.error("Failed to start cycle");
     }
-  };
-
-  // Group checklist items by category
-  const getItemForKey = (key: string) => {
-    return checklist?.find(item => item.itemKey === key);
   };
 
   if (!activeCycle) {
@@ -187,44 +131,51 @@ export default function Checklist() {
           <p className="text-xs text-primary mt-2">— {quote.chapter}</p>
         </div>
 
-        {/* Checklist Categories */}
-        {CHECKLIST_CATEGORIES.map((category, categoryIndex) => (
-          <Card key={categoryIndex} className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="text-lg">{category.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {category.items.map((item) => {
-                  const checklistItem = getItemForKey(item.key);
-                  return (
-                    <div 
-                      key={item.key}
-                      className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/30 transition-colors"
-                    >
-                      <Checkbox
-                        id={item.key}
-                        checked={checklistItem?.isCompleted ?? false}
-                        onCheckedChange={(checked) => {
-                          if (checklistItem) {
-                            handleToggle(checklistItem.id, checked as boolean);
-                          }
-                        }}
-                        className="mt-0.5"
-                      />
-                      <label 
-                        htmlFor={item.key}
-                        className={`text-sm cursor-pointer ${checklistItem?.isCompleted ? 'text-muted-foreground line-through' : ''}`}
-                      >
-                        {item.label}
-                      </label>
-                    </div>
-                  );
-                })}
+        {/* Checklist Items - Rendered directly from database */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-lg">Pre-Cycle Readiness Items</CardTitle>
+            <CardDescription>
+              Tick each item as you complete it to track your readiness
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="animate-pulse space-y-4">
+                {[1, 2, 3, 4, 5].map(i => (
+                  <div key={i} className="h-12 bg-muted rounded-lg" />
+                ))}
               </div>
-            </CardContent>
-          </Card>
-        ))}
+            ) : checklist && checklist.length > 0 ? (
+              <div className="space-y-3">
+                {checklist.map((item) => (
+                  <div 
+                    key={item.id}
+                    className="flex items-start gap-3 p-3 rounded-lg hover:bg-muted/30 transition-colors cursor-pointer"
+                    onClick={() => handleToggle(item.id, !item.isCompleted)}
+                  >
+                    <Checkbox
+                      id={`item-${item.id}`}
+                      checked={item.isCompleted ?? false}
+                      onCheckedChange={(checked) => handleToggle(item.id, checked as boolean)}
+                      className="mt-0.5"
+                    />
+                    <label 
+                      htmlFor={`item-${item.id}`}
+                      className={`text-sm cursor-pointer flex-1 ${item.isCompleted ? 'text-muted-foreground line-through' : ''}`}
+                    >
+                      {item.itemLabel}
+                    </label>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-muted-foreground text-center py-4">
+                No checklist items found. Try creating a new cycle.
+              </p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Quick Links */}
         <Card className="bg-card/50 border-border">

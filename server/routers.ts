@@ -613,7 +613,7 @@ export const appRouter = router({
       }))
       .mutation(async ({ ctx, input }) => {
         const inviteToken = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
-        return db.createPartner({
+        const partner = await db.createPartner({
           userId: ctx.user.id,
           partnerEmail: input.partnerEmail,
           partnerName: input.partnerName,
@@ -624,6 +624,16 @@ export const appRouter = router({
           inviteToken,
           status: "pending",
         });
+        
+        // Send notification to the app owner about the new partner invite
+        // In a production app, you would send an actual email to the partner
+        const partnerDisplayName = input.partnerName || input.partnerEmail;
+        await notifyOwner({
+          title: "🤝 New Accountability Partner Invited",
+          content: `${ctx.user.name || ctx.user.email || 'A user'} has invited ${partnerDisplayName} (${input.partnerEmail}) as an accountability partner.\n\nThe partner will need to create an account and accept the invitation to start sharing progress.\n\nInvite Token: ${inviteToken}`,
+        });
+        
+        return partner;
       }),
     
     update: protectedProcedure

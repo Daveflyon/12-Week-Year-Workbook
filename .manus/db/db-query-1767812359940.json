@@ -1,0 +1,130 @@
+{
+  "query": "SELECT id, itemKey, itemLabel, isCompleted FROM checklistItems WHERE userId = 1 LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user iNhAe1dL1wzAkH4.root --database 7YT5AjFkoqfS5QKmXhFci2 --execute SELECT id, itemKey, itemLabel, isCompleted FROM checklistItems WHERE userId = 1 LIMIT 20;",
+  "rows": [
+    {
+      "id": "1",
+      "itemKey": "vision_reviewed",
+      "itemLabel": "Reviewed your 3-5 year vision to ensure new goals are aligned",
+      "isCompleted": "0"
+    },
+    {
+      "id": "2",
+      "itemKey": "goal_limit_set",
+      "itemLabel": "Limited the number of primary 12-Week Goals to a maximum of 3",
+      "isCompleted": "0"
+    },
+    {
+      "id": "3",
+      "itemKey": "tactics_quantified",
+      "itemLabel": "Every Lead Indicator is a specific, measurable action",
+      "isCompleted": "0"
+    },
+    {
+      "id": "4",
+      "itemKey": "strategic_blocks_scheduled",
+      "itemLabel": "Blocked out Strategic Blocks (3+ hours of deep work) for the first 3 weeks",
+      "isCompleted": "0"
+    },
+    {
+      "id": "5",
+      "itemKey": "execution_target_set",
+      "itemLabel": "Committed to the 85% Execution Score as your primary measure of success",
+      "isCompleted": "0"
+    },
+    {
+      "id": "6",
+      "itemKey": "perfectionism_rejected",
+      "itemLabel": "Mentally accepted that the goal is consistent effort (85%), not flawless execution (100%)",
+      "isCompleted": "0"
+    },
+    {
+      "id": "7",
+      "itemKey": "cycle_start_confirmed",
+      "itemLabel": "Confirmed the exact start date for Week 1, Day 1",
+      "isCompleted": "0"
+    },
+    {
+      "id": "8",
+      "itemKey": "commitment_statement_written",
+      "itemLabel": "Written a personal commitment statement focusing on the 3 Principles",
+      "isCompleted": "0"
+    },
+    {
+      "id": "9",
+      "itemKey": "vision_reviewed",
+      "itemLabel": "Reviewed your 3-5 year vision to ensure new goals are aligned",
+      "isCompleted": "0"
+    },
+    {
+      "id": "10",
+      "itemKey": "goal_limit_set",
+      "itemLabel": "Limited the number of primary 12-Week Goals to a maximum of 3",
+      "isCompleted": "0"
+    },
+    {
+      "id": "11",
+      "itemKey": "tactics_quantified",
+      "itemLabel": "Every Lead Indicator is a specific, measurable action",
+      "isCompleted": "0"
+    },
+    {
+      "id": "12",
+      "itemKey": "strategic_blocks_scheduled",
+      "itemLabel": "Blocked out Strategic Blocks (3+ hours of deep work) for the first 3 weeks",
+      "isCompleted": "0"
+    },
+    {
+      "id": "13",
+      "itemKey": "execution_target_set",
+      "itemLabel": "Committed to the 85% Execution Score as your primary measure of success",
+      "isCompleted": "0"
+    },
+    {
+      "id": "14",
+      "itemKey": "perfectionism_rejected",
+      "itemLabel": "Mentally accepted that the goal is consistent effort (85%), not flawless execution (100%)",
+      "isCompleted": "0"
+    },
+    {
+      "id": "15",
+      "itemKey": "cycle_start_confirmed",
+      "itemLabel": "Confirmed the exact start date for Week 1, Day 1",
+      "isCompleted": "0"
+    },
+    {
+      "id": "16",
+      "itemKey": "commitment_statement_written",
+      "itemLabel": "Written a personal commitment statement focusing on the 3 Principles",
+      "isCompleted": "0"
+    },
+    {
+      "id": "17",
+      "itemKey": "vision_reviewed",
+      "itemLabel": "Reviewed your 3-5 year vision to ensure new goals are aligned",
+      "isCompleted": "0"
+    },
+    {
+      "id": "18",
+      "itemKey": "goal_limit_set",
+      "itemLabel": "Limited the number of primary 12-Week Goals to a maximum of 3",
+      "isCompleted": "0"
+    },
+    {
+      "id": "19",
+      "itemKey": "tactics_quantified",
+      "itemLabel": "Every Lead Indicator is a specific, measurable action",
+      "isCompleted": "0"
+    },
+    {
+      "id": "20",
+      "itemKey": "strategic_blocks_scheduled",
+      "itemLabel": "Blocked out Strategic Blocks (3+ hours of deep work) for the first 3 weeks",
+      "isCompleted": "0"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\titemKey\titemLabel\tisCompleted\n1\tvision_reviewed\tReviewed your 3-5 year vision to ensure new goals are aligned\t0\n2\tgoal_limit_set\tLimited the number of primary 12-Week Goals to a maximum of 3\t0\n3\ttactics_quantified\tEvery Lead Indicator is a specific, measurable action\t0\n4\tstrategic_blocks_scheduled\tBlocked out Strategic Blocks (3+ hours of deep work) for the first 3 weeks\t0\n5\texecution_target_set\tCommitted to the 85% Execution Score as your primary measure of success\t0\n6\tperfectionism_rejected\tMentally accepted that the goal is consistent effort (85%), not flawless execution (100%)\t0\n7\tcycle_start_confirmed\tConfirmed the exact start date for Week 1, Day 1\t0\n8\tcommitment_statement_written\tWritten a personal commitment statement focusing on the 3 Principles\t0\n9\tvision_reviewed\tReviewed your 3-5 year vision to ensure new goals are aligned\t0\n10\tgoal_limit_set\tLimited the number of primary 12-Week Goals to a maximum of 3\t0\n11\ttactics_quantified\tEvery Lead Indicator is a specific, measurable action\t0\n12\tstrategic_blocks_scheduled\tBlocked out Strategic Blocks (3+ hours of deep work) for the first 3 weeks\t0\n13\texecution_target_set\tCommitted to the 85% Execution Score as your primary measure of success\t0\n14\tperfectionism_rejected\tMentally accepted that the goal is consistent effort (85%), not flawless execution (100%)\t0\n15\tcycle_start_confirmed\tConfirmed the exact start date for Week 1, Day 1\t0\n16\tcommitment_statement_written\tWritten a personal commitment statement focusing on the 3 Principles\t0\n17\tvision_reviewed\tReviewed your 3-5 year vision to ensure new goals are aligned\t0\n18\tgoal_limit_set\tLimited the number of primary 12-Week Goals to a maximum of 3\t0\n19\ttactics_quantified\tEvery Lead Indicator is a specific, measurable action\t0\n20\tstrategic_blocks_scheduled\tBlocked out Strategic Blocks (3+ hours of deep work) for the first 3 weeks\t0\n",
+  "stderr": "",
+  "execution_time_ms": 1542
+}
