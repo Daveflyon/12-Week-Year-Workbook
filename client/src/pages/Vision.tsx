@@ -5,10 +5,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
-import { Eye, Plus, X, Save, Quote, Lightbulb } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Eye, Plus, X, Quote, Lightbulb } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { getRandomQuote } from "@shared/quotes";
+import { useAutoSave } from "@/hooks/useAutoSave";
+import SaveStatusIndicator from "@/components/SaveStatusIndicator";
 
 export default function Vision() {
   const { data: cycles } = trpc.cycle.list.useQuery();
@@ -39,22 +41,33 @@ export default function Vision() {
     }
   }, [vision]);
 
-  const handleSave = async () => {
+  // Auto-save data object
+  const visionData = useMemo(() => ({
+    longTermVision,
+    strategicImperatives,
+    commitmentStatement,
+  }), [longTermVision, strategicImperatives, commitmentStatement]);
+
+  // Auto-save callback
+  const performAutoSave = useCallback(async (data: typeof visionData) => {
     if (!activeCycle) return;
     
-    try {
-      await upsertVision.mutateAsync({
-        cycleId: activeCycle.id,
-        longTermVision,
-        strategicImperatives: strategicImperatives.filter(s => s.trim()),
-        commitmentStatement,
-      });
-      utils.vision.get.invalidate();
-      toast.success("Vision saved successfully");
-    } catch (error) {
-      toast.error("Failed to save vision");
-    }
-  };
+    await upsertVision.mutateAsync({
+      cycleId: activeCycle.id,
+      longTermVision: data.longTermVision,
+      strategicImperatives: data.strategicImperatives.filter(s => s.trim()),
+      commitmentStatement: data.commitmentStatement,
+    });
+    utils.vision.get.invalidate();
+  }, [activeCycle, upsertVision, utils]);
+
+  // Auto-save hook
+  const { status: saveStatus, retry: retrySave } = useAutoSave({
+    data: visionData,
+    onSave: performAutoSave,
+    debounceMs: 1000,
+    enabled: !!activeCycle,
+  });
 
   const addImperative = () => {
     if (strategicImperatives.length < 3) {
@@ -98,14 +111,10 @@ export default function Vision() {
               Define your "Why" to fuel your 12-week execution
             </p>
           </div>
-          <Button 
-            onClick={handleSave}
-            disabled={upsertVision.isPending}
-            className="gradient-primary text-primary-foreground"
-          >
-            <Save className="mr-2 h-4 w-4" />
-            Save Vision
-          </Button>
+          <SaveStatusIndicator 
+            status={saveStatus} 
+            onRetry={retrySave}
+          />
         </div>
 
         {/* Quote Card */}

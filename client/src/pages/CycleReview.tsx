@@ -5,11 +5,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { trpc } from "@/lib/trpc";
-import { FileText, Save, Quote, Target, TrendingUp, AlertTriangle, Lightbulb, ArrowLeft, Download } from "lucide-react";
-import { useState, useEffect } from "react";
+import { FileText, Quote, Target, TrendingUp, AlertTriangle, Lightbulb, ArrowLeft, Download } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useLocation } from "wouter";
 import { toast } from "sonner";
 import { getRandomQuote } from "@shared/quotes";
+import { useAutoSave } from "@/hooks/useAutoSave";
+import SaveStatusIndicator from "@/components/SaveStatusIndicator";
 
 export default function CycleReview() {
   const params = useParams<{ reviewType: string }>();
@@ -83,27 +85,42 @@ export default function CycleReview() {
     }
   }, [stats, averageExecutionScore]);
 
-  const handleSave = async () => {
+  // Auto-save data object
+  const reviewData = useMemo(() => ({
+    averageExecutionScore,
+    greatestSuccess,
+    biggestObstacle,
+    mostEffectiveTactic,
+    pitfallsEncountered,
+    adjustmentsForNextCycle,
+    lessonsLearned,
+  }), [averageExecutionScore, greatestSuccess, biggestObstacle, mostEffectiveTactic, pitfallsEncountered, adjustmentsForNextCycle, lessonsLearned]);
+
+  // Auto-save callback
+  const performAutoSave = useCallback(async (data: typeof reviewData) => {
     if (!activeCycle) return;
 
-    try {
-      await upsertReview.mutateAsync({
-        cycleId: activeCycle.id,
-        reviewType,
-        averageExecutionScore,
-        greatestSuccess,
-        biggestObstacle,
-        mostEffectiveTactic,
-        pitfallsEncountered,
-        adjustmentsForNextCycle,
-        lessonsLearned,
-      });
-      utils.cycleReview.get.invalidate();
-      toast.success("Review saved successfully");
-    } catch (error) {
-      toast.error("Failed to save review");
-    }
-  };
+    await upsertReview.mutateAsync({
+      cycleId: activeCycle.id,
+      reviewType,
+      averageExecutionScore: data.averageExecutionScore,
+      greatestSuccess: data.greatestSuccess,
+      biggestObstacle: data.biggestObstacle,
+      mostEffectiveTactic: data.mostEffectiveTactic,
+      pitfallsEncountered: data.pitfallsEncountered,
+      adjustmentsForNextCycle: data.adjustmentsForNextCycle,
+      lessonsLearned: data.lessonsLearned,
+    });
+    utils.cycleReview.get.invalidate();
+  }, [activeCycle, reviewType, upsertReview, utils]);
+
+  // Auto-save hook
+  const { status: saveStatus, retry: retrySave } = useAutoSave({
+    data: reviewData,
+    onSave: performAutoSave,
+    debounceMs: 1000,
+    enabled: !!activeCycle,
+  });
 
   const isMidCycle = reviewType === 'mid_cycle';
   const title = isMidCycle ? "Mid-Cycle Review (Week 6)" : "Final Cycle Review (Week 13)";
@@ -152,14 +169,10 @@ export default function CycleReview() {
               <Download className="mr-2 h-4 w-4" />
               Export PDF
             </Button>
-            <Button 
-              onClick={handleSave}
-              disabled={upsertReview.isPending}
-              className="gradient-primary text-primary-foreground"
-            >
-              <Save className="mr-2 h-4 w-4" />
-              Save Review
-            </Button>
+            <SaveStatusIndicator 
+              status={saveStatus} 
+              onRetry={retrySave}
+            />
           </div>
         </div>
 

@@ -9,11 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { trpc } from "@/lib/trpc";
 import { ClipboardCheck, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Quote, Save, Download, Zap, Copy } from "lucide-react";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useParams } from "wouter";
 import { toast } from "sonner";
 import { getQuoteForWeek, WEEK_THEMES } from "@shared/quotes";
 import TooltipTour, { TourStep } from "@/components/TooltipTour";
+import { useAutoSave } from "@/hooks/useAutoSave";
+import SaveStatusIndicator from "@/components/SaveStatusIndicator";
 
 const SCORECARD_TOUR_STEPS: TourStep[] = [
   {
@@ -36,8 +38,8 @@ const SCORECARD_TOUR_STEPS: TourStep[] = [
   },
   {
     target: "[data-tour='save-btn']",
-    title: "Save Your Progress",
-    content: "Remember to save your scorecard regularly. Your execution score is calculated automatically.",
+    title: "Auto-Save Enabled",
+    content: "Your scorecard saves automatically as you enter values. The status indicator shows when changes are being saved.",
     position: "left",
   },
 ];
@@ -319,6 +321,53 @@ export default function Scorecard() {
     });
   };
 
+  // Auto-save callback
+  const performAutoSave = useCallback(async (entries: Record<string, number>) => {
+    if (!activeCycle || !tactics) return;
+
+    const savePromises: Promise<any>[] = [];
+    
+    tactics.forEach(tactic => {
+      for (let day = 0; day < 7; day++) {
+        const key = `${tactic.id}-${selectedWeek}-${day}`;
+        const completed = entries[key] || 0;
+        
+        savePromises.push(
+          upsertEntry.mutateAsync({
+            tacticId: tactic.id,
+            weekNumber: selectedWeek,
+            dayOfWeek: day,
+            date: weekDates[day],
+            completed,
+          })
+        );
+      }
+    });
+
+    await Promise.all(savePromises);
+
+    // Save weekly score
+    const currentScore = executionScore;
+    await upsertWeeklyScore.mutateAsync({
+      cycleId: activeCycle.id,
+      weekNumber: selectedWeek,
+      executionScore: currentScore.toFixed(1),
+    });
+
+    utils.tacticEntry.getAllForCycle.invalidate();
+    utils.weeklyScore.get.invalidate();
+    utils.weeklyScore.getByCycle.invalidate();
+    utils.stats.getDashboard.invalidate();
+  }, [activeCycle, tactics, selectedWeek, weekDates, executionScore, upsertEntry, upsertWeeklyScore, utils]);
+
+  // Auto-save hook
+  const { status: saveStatus, retry: retrySave } = useAutoSave({
+    data: localEntries,
+    onSave: performAutoSave,
+    debounceMs: 1000,
+    enabled: !!activeCycle && !!tactics && tactics.length > 0,
+  });
+
   const handleSave = async () => {
     if (!activeCycle) return;
 
@@ -391,22 +440,18 @@ export default function Scorecard() {
               Track your daily execution of lead indicators
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex items-center gap-3">
+            <SaveStatusIndicator 
+              status={saveStatus} 
+              onRetry={retrySave}
+              data-tour="save-btn"
+            />
             <Button 
               variant="outline"
               onClick={handleExportPDF}
             >
               <Download className="mr-2 h-4 w-4" />
               Export PDF
-            </Button>
-            <Button 
-              onClick={handleSave}
-              disabled={upsertEntry.isPending || upsertWeeklyScore.isPending}
-              className="gradient-primary text-primary-foreground"
-              data-tour="save-btn"
-            >
-              <Save className="mr-2 h-4 w-4" />
-              Save Scorecard
             </Button>
           </div>
         </div>

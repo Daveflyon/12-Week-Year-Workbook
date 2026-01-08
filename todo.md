@@ -132,3 +132,14 @@
 - [x] Show confirmation before resetting tours
 - [x] Add progress indicators showing sections explored vs total
 - [x] Display exploration progress in Settings with badges
+
+## Auto-Save Implementation (Phase 16)
+- [x] Create reusable useAutoSave hook with debouncing (1000ms delay)
+- [x] Create SaveStatusIndicator component showing "Saving...", "Saved ✓", "Error" states
+- [x] Implement auto-save on Scorecard page (tactic entries)
+- [x] Implement auto-save on Vision page (text fields)
+- [x] Implement auto-save on Weekly Review page (text fields)
+- [x] Implement auto-save on Cycle Review page (text fields)
+- [x] Implement auto-save on Settings page (reminder preferences)
+- [x] Add visual feedback indicators to all auto-save pages
+- [x] Handle offline/error states gracefully with retry option

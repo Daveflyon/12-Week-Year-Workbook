@@ -6,9 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Settings as SettingsIcon, Bell, Save, Calendar, Clock, Quote, Plus, Send, Download, RotateCcw, FileJson, FileText, HelpCircle, CheckCircle } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Settings as SettingsIcon, Bell, Calendar, Clock, Quote, Plus, Send, Download, RotateCcw, FileJson, FileText, HelpCircle, CheckCircle } from "lucide-react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
+import { useAutoSave } from "@/hooks/useAutoSave";
+import SaveStatusIndicator from "@/components/SaveStatusIndicator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -125,21 +127,34 @@ export default function Settings() {
     }
   }, [reminder]);
 
-  const handleSave = async () => {
-    try {
-      await upsertReminder.mutateAsync({
-        dailyReminderTime,
-        weeklyReviewDay: parseInt(weeklyReviewDay),
-        weeklyReviewTime,
-        enableDailyReminders,
-        enableWeeklyReminders,
-      });
-      utils.reminder.get.invalidate();
-      toast.success("Settings saved successfully");
-    } catch (error) {
-      toast.error("Failed to save settings");
-    }
-  };
+  // Auto-save data object
+  const settingsData = useMemo(() => ({
+    dailyReminderTime,
+    weeklyReviewDay,
+    weeklyReviewTime,
+    enableDailyReminders,
+    enableWeeklyReminders,
+  }), [dailyReminderTime, weeklyReviewDay, weeklyReviewTime, enableDailyReminders, enableWeeklyReminders]);
+
+  // Auto-save callback
+  const performAutoSave = useCallback(async (data: typeof settingsData) => {
+    await upsertReminder.mutateAsync({
+      dailyReminderTime: data.dailyReminderTime,
+      weeklyReviewDay: parseInt(data.weeklyReviewDay),
+      weeklyReviewTime: data.weeklyReviewTime,
+      enableDailyReminders: data.enableDailyReminders,
+      enableWeeklyReminders: data.enableWeeklyReminders,
+    });
+    utils.reminder.get.invalidate();
+  }, [upsertReminder, utils]);
+
+  // Auto-save hook
+  const { status: saveStatus, retry: retrySave } = useAutoSave({
+    data: settingsData,
+    onSave: performAutoSave,
+    debounceMs: 1000,
+    enabled: true,
+  });
 
   const handleCreateNewCycle = async () => {
     const startDate = new Date();
@@ -174,14 +189,10 @@ export default function Settings() {
               Configure your reminders and preferences
             </p>
           </div>
-          <Button 
-            onClick={handleSave}
-            disabled={upsertReminder.isPending}
-            className="gradient-primary text-primary-foreground"
-          >
-            <Save className="mr-2 h-4 w-4" />
-            Save Settings
-          </Button>
+          <SaveStatusIndicator 
+            status={saveStatus} 
+            onRetry={retrySave}
+          />
         </div>
 
         {/* Quote Card */}
