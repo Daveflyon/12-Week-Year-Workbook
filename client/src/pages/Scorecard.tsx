@@ -364,13 +364,34 @@ export default function Scorecard() {
     utils.stats.getDashboard.invalidate();
   }, [activeCycle, tactics, selectedWeek, weekDates, executionScore, upsertEntry, upsertWeeklyScore, utils]);
 
-  // Auto-save hook
-  const { status: saveStatus, retry: retrySave } = useAutoSave({
+  // Auto-save hook with undo support
+  const { 
+    status: saveStatus, 
+    retry: retrySave,
+    canUndo,
+    undoCountdown,
+    undo: handleUndo,
+    pendingChanges,
+  } = useAutoSave({
     data: localEntries,
     onSave: performAutoSave,
     debounceMs: 1000,
     enabled: !!activeCycle && !!tactics && tactics.length > 0,
+    undoWindowMs: 10000,
+    storageKey: `scorecard-${activeCycle?.id}-${selectedWeek}`,
   });
+
+  // Sync local state when undo is performed
+  useEffect(() => {
+    if (allEntries) {
+      const entriesMap: Record<string, number> = {};
+      allEntries.forEach(entry => {
+        const key = `${entry.tacticId}-${entry.weekNumber}-${entry.dayOfWeek}`;
+        entriesMap[key] = entry.completed;
+      });
+      setLocalEntries(entriesMap);
+    }
+  }, [allEntries]);
 
   const handleSave = async () => {
     if (!activeCycle) return;
@@ -448,6 +469,10 @@ export default function Scorecard() {
             <SaveStatusIndicator 
               status={saveStatus} 
               onRetry={retrySave}
+              canUndo={canUndo}
+              undoCountdown={undoCountdown}
+              onUndo={handleUndo}
+              pendingChanges={pendingChanges}
               data-tour="save-btn"
             />
             <Button 

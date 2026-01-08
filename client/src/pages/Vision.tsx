@@ -61,12 +61,21 @@ export default function Vision() {
     utils.vision.get.invalidate();
   }, [activeCycle, upsertVision, utils]);
 
-  // Auto-save hook
-  const { status: saveStatus, retry: retrySave } = useAutoSave({
+  // Auto-save hook with undo support
+  const { 
+    status: saveStatus, 
+    retry: retrySave,
+    canUndo,
+    undoCountdown,
+    undo: handleUndo,
+    pendingChanges,
+  } = useAutoSave({
     data: visionData,
     onSave: performAutoSave,
     debounceMs: 1000,
     enabled: !!activeCycle,
+    undoWindowMs: 10000,
+    storageKey: `vision-${activeCycle?.id}`,
   });
 
   const addImperative = () => {
@@ -114,6 +123,10 @@ export default function Vision() {
           <SaveStatusIndicator 
             status={saveStatus} 
             onRetry={retrySave}
+            canUndo={canUndo}
+            undoCountdown={undoCountdown}
+            onUndo={handleUndo}
+            pendingChanges={pendingChanges}
           />
         </div>
 

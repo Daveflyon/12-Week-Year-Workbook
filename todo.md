@@ -150,3 +150,22 @@
 - [x] Replaced JSON export with PDF export in Settings
 - [x] Created printable cycle summary with goals, tactics, scores, and reviews
 - [x] Export PDF now works on Scorecard, Cycle Review, and Settings pages
+
+## Undo Functionality (Phase 18)
+- [x] Create useUndo hook to track previous state before auto-save
+- [x] Add "Undo" toast notification with 10-second countdown after each save
+- [x] Allow users to click "Undo" to revert to previous state
+- [x] Integrate undo with all auto-save pages (Scorecard, Vision, Weekly Review, Cycle Review, Settings)
+
+## Offline Support (Phase 19)
+- [x] Create offline detection hook using navigator.onLine and online/offline events
+- [x] Queue changes in localStorage when offline
+- [x] Show "Offline" indicator in SaveStatusIndicator component
+- [x] Auto-sync queued changes when connection is restored
+- [x] Handle sync conflicts gracefully (uses latest change strategy)
+
+## Cycle Templates (Phase 20)
+- [x] Create template data for common 12-week objectives (Fitness, Business Growth, Learning)
+- [x] Add "Use Template" option when creating a new cycle
+- [x] Pre-populate goals and tactics from selected template
+- [x] Allow users to customise template content after selection

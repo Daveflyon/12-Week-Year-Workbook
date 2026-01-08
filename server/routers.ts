@@ -82,6 +82,65 @@ export const appRouter = router({
         await db.updateCycle(input.cycleId, ctx.user.id, { status: "completed" });
         return { success: true };
       }),
+    
+    createFromTemplate: protectedProcedure
+      .input(z.object({
+        title: z.string().min(1),
+        startDate: z.date(),
+        endDate: z.date(),
+        templateGoals: z.array(z.object({
+          title: z.string(),
+          description: z.string(),
+          tactics: z.array(z.object({
+            title: z.string(),
+            weeklyTarget: z.number(),
+            unit: z.string(),
+          })),
+        })).optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        // Create the cycle
+        const cycle = await db.createCycle({
+          userId: ctx.user.id,
+          title: input.title,
+          startDate: input.startDate,
+          endDate: input.endDate,
+          status: "planning",
+        });
+        
+        // Initialize checklist for the new cycle
+        await db.initializeChecklist(cycle.id, ctx.user.id);
+        
+        // If template goals provided, create goals and tactics
+        if (input.templateGoals && input.templateGoals.length > 0) {
+          for (const templateGoal of input.templateGoals) {
+            // Create goal - use whyItMatters for description
+            const goal = await db.createGoal({
+              cycleId: cycle.id,
+              userId: ctx.user.id,
+              title: templateGoal.title,
+              whyItMatters: templateGoal.description,
+              lagIndicator: "Completion percentage",
+              lagTarget: "100",
+              lagCurrentValue: "0",
+            });
+            
+            // Create tactics for this goal
+            for (const templateTactic of templateGoal.tactics) {
+              await db.createTactic({
+                goalId: goal.id,
+                userId: ctx.user.id,
+                title: templateTactic.title,
+                weeklyTarget: templateTactic.weeklyTarget,
+                totalTarget: templateTactic.weeklyTarget * 12,
+                measurementUnit: templateTactic.unit,
+              });
+            }
+          }
+        }
+        
+        return cycle;
+      }),
   }),
 
   // Vision management

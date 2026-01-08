@@ -118,12 +118,21 @@ export default function CycleReview() {
     utils.cycleReview.get.invalidate();
   }, [activeCycle, reviewType, upsertReview, utils]);
 
-  // Auto-save hook
-  const { status: saveStatus, retry: retrySave } = useAutoSave({
+  // Auto-save hook with undo support
+  const { 
+    status: saveStatus, 
+    retry: retrySave,
+    canUndo,
+    undoCountdown,
+    undo: handleUndo,
+    pendingChanges,
+  } = useAutoSave({
     data: reviewData,
     onSave: performAutoSave,
     debounceMs: 1000,
     enabled: !!activeCycle,
+    undoWindowMs: 10000,
+    storageKey: `cycle-review-${activeCycle?.id}-${reviewType}`,
   });
 
   const isMidCycle = reviewType === 'mid_cycle';
@@ -176,6 +185,10 @@ export default function CycleReview() {
             <SaveStatusIndicator 
               status={saveStatus} 
               onRetry={retrySave}
+              canUndo={canUndo}
+              undoCountdown={undoCountdown}
+              onUndo={handleUndo}
+              pendingChanges={pendingChanges}
             />
           </div>
         </div>

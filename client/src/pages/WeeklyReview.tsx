@@ -112,12 +112,21 @@ export default function WeeklyReview() {
     utils.weeklyReview.get.invalidate();
   }, [activeCycle, selectedWeek, upsertReview, utils]);
 
-  // Auto-save hook
-  const { status: saveStatus, retry: retrySave } = useAutoSave({
+  // Auto-save hook with undo support
+  const { 
+    status: saveStatus, 
+    retry: retrySave,
+    canUndo,
+    undoCountdown,
+    undo: handleUndo,
+    pendingChanges,
+  } = useAutoSave({
     data: reviewData,
     onSave: performAutoSave,
     debounceMs: 1000,
     enabled: !!activeCycle,
+    undoWindowMs: 10000,
+    storageKey: `weekly-review-${activeCycle?.id}-${selectedWeek}`,
   });
 
   const weekTheme = WEEK_THEMES.find(w => w.week === selectedWeek);
@@ -158,6 +167,10 @@ export default function WeeklyReview() {
           <SaveStatusIndicator 
             status={saveStatus} 
             onRetry={retrySave}
+            canUndo={canUndo}
+            undoCountdown={undoCountdown}
+            onUndo={handleUndo}
+            pendingChanges={pendingChanges}
           />
         </div>
 

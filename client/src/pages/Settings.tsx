@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Settings as SettingsIcon, Bell, Calendar, Clock, Quote, Plus, Send, Download, RotateCcw, FileJson, FileText, HelpCircle, CheckCircle } from "lucide-react";
+import { Settings as SettingsIcon, Bell, Calendar, Clock, Quote, Plus, Send, Download, RotateCcw, FileJson, FileText, HelpCircle, CheckCircle, Sparkles } from "lucide-react";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { useAutoSave } from "@/hooks/useAutoSave";
@@ -24,6 +24,8 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { getRandomQuote } from "@shared/quotes";
 import { useLocation } from "wouter";
+import TemplateSelector from "@/components/TemplateSelector";
+import { CycleTemplate } from "@shared/templates";
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -58,8 +60,11 @@ export default function Settings() {
   const [enableDailyReminders, setEnableDailyReminders] = useState(true);
   const [enableWeeklyReminders, setEnableWeeklyReminders] = useState(true);
 
+  const [templateSelectorOpen, setTemplateSelectorOpen] = useState(false);
+
   const upsertReminder = trpc.reminder.upsert.useMutation();
   const createCycle = trpc.cycle.create.useMutation();
+  const createFromTemplate = trpc.cycle.createFromTemplate.useMutation();
   const testNotification = trpc.notification.testNotification.useMutation();
   const utils = trpc.useUtils();
 
@@ -155,27 +160,56 @@ export default function Settings() {
     utils.reminder.get.invalidate();
   }, [upsertReminder, utils]);
 
-  // Auto-save hook
-  const { status: saveStatus, retry: retrySave } = useAutoSave({
+  // Auto-save hook with undo support
+  const { 
+    status: saveStatus, 
+    retry: retrySave,
+    canUndo,
+    undoCountdown,
+    undo: handleUndo,
+    pendingChanges,
+  } = useAutoSave({
     data: settingsData,
     onSave: performAutoSave,
     debounceMs: 1000,
     enabled: true,
+    undoWindowMs: 10000,
+    storageKey: 'settings',
   });
 
-  const handleCreateNewCycle = async () => {
+  const handleCreateNewCycle = async (template: CycleTemplate | null) => {
     const startDate = new Date();
     const endDate = new Date();
     endDate.setDate(endDate.getDate() + 84); // 12 weeks
 
     try {
-      await createCycle.mutateAsync({
-        title: `12-Week Cycle - ${startDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`,
-        startDate,
-        endDate,
-      });
+      if (template) {
+        // Create cycle with template
+        await createFromTemplate.mutateAsync({
+          title: `${template.name} - ${startDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`,
+          startDate,
+          endDate,
+          templateGoals: template.goals.map(g => ({
+            title: g.title,
+            description: g.description,
+            tactics: g.tactics.map(t => ({
+              title: t.title,
+              weeklyTarget: t.weeklyTarget,
+              unit: t.unit,
+            })),
+          })),
+        });
+        toast.success(`Cycle created from "${template.name}" template!`);
+      } else {
+        // Create blank cycle
+        await createCycle.mutateAsync({
+          title: `12-Week Cycle - ${startDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}`,
+          startDate,
+          endDate,
+        });
+        toast.success("New blank cycle created!");
+      }
       utils.cycle.list.invalidate();
-      toast.success("New cycle created!");
       setLocation("/checklist");
     } catch (error) {
       toast.error("Failed to create cycle");
@@ -199,6 +233,10 @@ export default function Settings() {
           <SaveStatusIndicator 
             status={saveStatus} 
             onRetry={retrySave}
+            canUndo={canUndo}
+            undoCountdown={undoCountdown}
+            onUndo={handleUndo}
+            pendingChanges={pendingChanges}
           />
         </div>
 
@@ -248,14 +286,24 @@ export default function Settings() {
               <p className="text-muted-foreground">No active cycle</p>
             )}
             
-            <Button 
-              variant="outline" 
-              onClick={handleCreateNewCycle}
-              disabled={createCycle.isPending}
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Create New Cycle
-            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setTemplateSelectorOpen(true)}
+                disabled={createCycle.isPending || createFromTemplate.isPending}
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                Create from Template
+              </Button>
+              <Button 
+                variant="ghost" 
+                onClick={() => handleCreateNewCycle(null)}
+                disabled={createCycle.isPending || createFromTemplate.isPending}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Blank Cycle
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
@@ -527,6 +575,13 @@ export default function Settings() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Template Selector Dialog */}
+      <TemplateSelector
+        open={templateSelectorOpen}
+        onClose={() => setTemplateSelectorOpen(false)}
+        onSelectTemplate={handleCreateNewCycle}
+      />
     </AppLayout>
   );
 }
