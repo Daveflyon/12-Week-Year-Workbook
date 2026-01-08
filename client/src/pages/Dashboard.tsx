@@ -3,6 +3,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { trpc } from "@/lib/trpc";
 import { 
   Target, 
@@ -15,7 +32,13 @@ import {
   Sparkles,
   Users,
   Quote,
-  ChevronDown
+  ChevronDown,
+  Trash2,
+  Archive,
+  ArchiveRestore,
+  MoreVertical,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
@@ -179,6 +202,46 @@ export default function Dashboard() {
     }
     return null;
   });
+  const [showArchived, setShowArchived] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [cycleToDelete, setCycleToDelete] = useState<{ id: number; title: string } | null>(null);
+  
+  const utils = trpc.useUtils();
+  
+  const deleteCycle = trpc.cycle.delete.useMutation({
+    onSuccess: () => {
+      utils.cycle.list.invalidate();
+      if (cycleToDelete?.id === selectedCycleId) {
+        setSelectedCycleId(null);
+        localStorage.removeItem(SELECTED_CYCLE_KEY);
+      }
+      setDeleteDialogOpen(false);
+      setCycleToDelete(null);
+    },
+  });
+  
+  const archiveCycle = trpc.cycle.archive.useMutation({
+    onSuccess: () => {
+      utils.cycle.list.invalidate();
+    },
+  });
+  
+  const unarchiveCycle = trpc.cycle.unarchive.useMutation({
+    onSuccess: () => {
+      utils.cycle.list.invalidate();
+    },
+  });
+  
+  const handleDeleteCycle = (cycle: { id: number; title: string }) => {
+    setCycleToDelete(cycle);
+    setDeleteDialogOpen(true);
+  };
+  
+  const confirmDelete = () => {
+    if (cycleToDelete) {
+      deleteCycle.mutate({ cycleId: cycleToDelete.id });
+    }
+  };
   
   const handleOnboardingComplete = () => {
     localStorage.setItem(ONBOARDING_KEY, 'true');
@@ -287,11 +350,29 @@ export default function Dashboard() {
                   <SelectValue placeholder="Select cycle" />
                 </SelectTrigger>
                 <SelectContent>
-                  {cycles?.map((cycle) => (
+                  {/* Archive filter toggle */}
+                  <div className="px-2 py-1.5 border-b border-border mb-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start h-7 text-xs"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setShowArchived(!showArchived);
+                      }}
+                    >
+                      {showArchived ? <EyeOff className="mr-2 h-3 w-3" /> : <Eye className="mr-2 h-3 w-3" />}
+                      {showArchived ? 'Hide Archived' : 'Show Archived'}
+                    </Button>
+                  </div>
+                  {cycles
+                    ?.filter(c => showArchived || c.status !== 'archived')
+                    .map((cycle) => (
                     <SelectItem key={cycle.id} value={cycle.id.toString()}>
                       <div className="flex items-center justify-between w-full gap-2">
-                        <span className={cycle.goalCount === 0 ? 'text-muted-foreground' : ''}>
+                        <span className={cycle.goalCount === 0 || cycle.status === 'archived' ? 'text-muted-foreground' : ''}>
                           {cycle.title}
+                          {cycle.status === 'archived' && ' (Archived)'}
                         </span>
                         {cycle.goalCount > 0 ? (
                           <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
@@ -307,6 +388,45 @@ export default function Dashboard() {
                   ))}
                 </SelectContent>
               </Select>
+              
+              {/* Cycle management dropdown */}
+              {activeCycle && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    {activeCycle.status === 'archived' ? (
+                      <DropdownMenuItem
+                        onClick={() => unarchiveCycle.mutate({ cycleId: activeCycle.id })}
+                        disabled={unarchiveCycle.isPending}
+                      >
+                        <ArchiveRestore className="mr-2 h-4 w-4" />
+                        Unarchive Cycle
+                      </DropdownMenuItem>
+                    ) : (
+                      <DropdownMenuItem
+                        onClick={() => archiveCycle.mutate({ cycleId: activeCycle.id })}
+                        disabled={archiveCycle.isPending}
+                      >
+                        <Archive className="mr-2 h-4 w-4" />
+                        Archive Cycle
+                      </DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onClick={() => handleDeleteCycle({ id: activeCycle.id, title: activeCycle.title })}
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Delete Cycle
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
+              
               <span className="text-muted-foreground text-sm">• Week {currentWeek} of 12</span>
             </div>
           </div>
@@ -513,6 +633,28 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </div>
+      
+      {/* Delete Cycle Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Cycle</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete "{cycleToDelete?.title}"? This will permanently delete all associated goals, tactics, scores, and reviews. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteCycle.isPending}
+            >
+              {deleteCycle.isPending ? 'Deleting...' : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }

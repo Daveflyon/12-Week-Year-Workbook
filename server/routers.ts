@@ -61,6 +61,27 @@ export const appRouter = router({
         await db.updateCycle(cycleId, ctx.user.id, data);
         return { success: true };
       }),
+    
+    delete: protectedProcedure
+      .input(z.object({ cycleId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.deleteCycle(input.cycleId, ctx.user.id);
+        return { success: true };
+      }),
+    
+    archive: protectedProcedure
+      .input(z.object({ cycleId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateCycle(input.cycleId, ctx.user.id, { status: "archived" });
+        return { success: true };
+      }),
+    
+    unarchive: protectedProcedure
+      .input(z.object({ cycleId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        await db.updateCycle(input.cycleId, ctx.user.id, { status: "completed" });
+        return { success: true };
+      }),
   }),
 
   // Vision management
@@ -646,6 +667,47 @@ export const appRouter = router({
         });
         
         return { html };
+      }),
+    
+    // Full cycle data export as JSON
+    cycleData: protectedProcedure
+      .input(z.object({ cycleId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const cycle = await db.getCycleById(input.cycleId, ctx.user.id);
+        if (!cycle) throw new Error("Cycle not found");
+        
+        const vision = await db.getVisionByCycle(input.cycleId, ctx.user.id);
+        const goals = await db.getGoalsByCycle(input.cycleId, ctx.user.id);
+        const performanceBlocks = await db.getPerformanceBlocksByCycle(input.cycleId, ctx.user.id);
+        const checklistItems = await db.getChecklistByCycle(input.cycleId, ctx.user.id);
+        const weeklyScores = await db.getWeeklyScoresByCycle(input.cycleId, ctx.user.id);
+        const weeklyReviews = await db.getWeeklyReviewsByCycle(input.cycleId, ctx.user.id);
+        const cycleReview = await db.getCycleReview(input.cycleId, ctx.user.id, "final");
+        
+        // Get tactics and entries for each goal
+        const goalsWithTactics = await Promise.all(goals.map(async (goal) => {
+          const tactics = await db.getTacticsByGoal(goal.id, ctx.user.id);
+          const tacticsWithEntries = await Promise.all(tactics.map(async (tactic) => {
+            const entries = await db.getTacticEntriesByTactic(tactic.id, ctx.user.id);
+            return { ...tactic, entries };
+          }));
+          return { ...goal, tactics: tacticsWithEntries };
+        }));
+        
+        return {
+          exportDate: new Date().toISOString(),
+          exportVersion: "1.0",
+          cycle: {
+            ...cycle,
+            vision,
+            goals: goalsWithTactics,
+            performanceBlocks,
+            checklistItems,
+            weeklyScores,
+            weeklyReviews,
+            cycleReview,
+          },
+        };
       }),
   }),
 

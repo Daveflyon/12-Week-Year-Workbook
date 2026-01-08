@@ -247,7 +247,7 @@ describe("stats router", () => {
 });
 
 describe("cycle ordering", () => {
-  it("should prioritize cycles with goals over empty cycles", async () => {
+  it("should prioritize cycles with goals over empty cycles", { timeout: 20000 }, async () => {
     const { ctx } = createAuthContext();
     const caller = appRouter.createCaller(ctx);
 

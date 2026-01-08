@@ -6,17 +6,44 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
-import { Settings as SettingsIcon, Bell, Save, Calendar, Clock, Quote, Plus, Send } from "lucide-react";
+import { Settings as SettingsIcon, Bell, Save, Calendar, Clock, Quote, Plus, Send, Download, RotateCcw, FileJson, FileText, HelpCircle, CheckCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Progress } from "@/components/ui/progress";
 import { getRandomQuote } from "@shared/quotes";
 import { useLocation } from "wouter";
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+// Tour pages for progress tracking
+const TOUR_PAGES = ['dashboard', 'goals', 'scorecard', 'blocks', 'checklist', 'review', 'vision'];
+
 export default function Settings() {
   const [, setLocation] = useLocation();
   const [quote] = useState(() => getRandomQuote());
+  const [resetToursDialogOpen, setResetToursDialogOpen] = useState(false);
+  const [exportFormat, setExportFormat] = useState<'json' | 'pdf' | null>(null);
+  
+  // Calculate tour progress
+  const [toursCompleted, setToursCompleted] = useState(0);
+  useEffect(() => {
+    const completed = TOUR_PAGES.filter(page => 
+      localStorage.getItem(`12wy_tour_${page}_completed`) === 'true'
+    ).length;
+    setToursCompleted(completed);
+  }, []);
+  
+  const tourProgress = Math.round((toursCompleted / TOUR_PAGES.length) * 100);
 
   const { data: cycles } = trpc.cycle.list.useQuery();
   const activeCycle = cycles?.find(c => c.status === 'active') || cycles?.[0];
@@ -45,6 +72,47 @@ export default function Settings() {
     } catch (error) {
       toast.error("Failed to send test notification");
     }
+  };
+
+  const handleExportJSON = async () => {
+    if (!activeCycle) {
+      toast.error("No active cycle to export");
+      return;
+    }
+    setExportFormat('json');
+    try {
+      const response = await fetch(`/api/trpc/export.cycleData?input=${encodeURIComponent(JSON.stringify({ cycleId: activeCycle.id }))}`);
+      const result = await response.json();
+      if (result.result?.data) {
+        const blob = new Blob([JSON.stringify(result.result.data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${activeCycle.title.replace(/[^a-z0-9]/gi, '_')}_export.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success("Cycle data exported successfully!");
+      } else {
+        throw new Error("Export failed");
+      }
+    } catch (error) {
+      toast.error("Failed to export cycle data");
+    } finally {
+      setExportFormat(null);
+    }
+  };
+
+  const handleResetTours = () => {
+    TOUR_PAGES.forEach(page => {
+      localStorage.removeItem(`12wy_tour_${page}_completed`);
+    });
+    // Also reset the intro
+    localStorage.removeItem('12wy_intro_completed');
+    setToursCompleted(0);
+    setResetToursDialogOpen(false);
+    toast.success("All tours have been reset. You'll see the onboarding hints again on each page.");
   };
 
   useEffect(() => {
@@ -307,6 +375,106 @@ export default function Settings() {
           </CardContent>
         </Card>
 
+        {/* Data Export */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Download className="h-5 w-5 text-primary" />
+              Data Export
+            </CardTitle>
+            <CardDescription>
+              Export your cycle data for backup or migration
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
+              <div className="flex items-center gap-3">
+                <FileJson className="h-8 w-8 text-blue-500" />
+                <div>
+                  <p className="font-medium">Export as JSON</p>
+                  <p className="text-sm text-muted-foreground">
+                    Full data backup including all goals, tactics, scores, and reviews
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                onClick={handleExportJSON}
+                disabled={exportFormat === 'json' || !activeCycle}
+              >
+                {exportFormat === 'json' ? "Exporting..." : "Export"}
+              </Button>
+            </div>
+            {!activeCycle && (
+              <p className="text-sm text-muted-foreground text-center">
+                Create a cycle first to enable data export
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Tour & Onboarding Settings */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <HelpCircle className="h-5 w-5 text-primary" />
+              Tour & Onboarding
+            </CardTitle>
+            <CardDescription>
+              Manage your onboarding experience and help tours
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            {/* Progress Indicator */}
+            <div className="p-4 rounded-lg bg-muted/30">
+              <div className="flex items-center justify-between mb-2">
+                <p className="font-medium">Sections Explored</p>
+                <span className="text-sm text-muted-foreground">
+                  {toursCompleted} of {TOUR_PAGES.length} completed
+                </span>
+              </div>
+              <Progress value={tourProgress} className="h-2" />
+              <div className="mt-3 flex flex-wrap gap-2">
+                {TOUR_PAGES.map(page => {
+                  const isCompleted = localStorage.getItem(`12wy_tour_${page}_completed`) === 'true';
+                  return (
+                    <span
+                      key={page}
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${
+                        isCompleted
+                          ? 'bg-primary/20 text-primary'
+                          : 'bg-muted text-muted-foreground'
+                      }`}
+                    >
+                      {isCompleted && <CheckCircle className="h-3 w-3" />}
+                      {page.charAt(0).toUpperCase() + page.slice(1)}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Reset Tours */}
+            <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
+              <div className="flex items-center gap-3">
+                <RotateCcw className="h-8 w-8 text-amber-500" />
+                <div>
+                  <p className="font-medium">Reset All Tours</p>
+                  <p className="text-sm text-muted-foreground">
+                    Clear tour history and see all onboarding hints again
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setResetToursDialogOpen(true)}
+              >
+                Reset
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Tips */}
         <Card className="bg-card/50 border-border">
           <CardHeader>
@@ -323,6 +491,24 @@ export default function Settings() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Reset Tours Confirmation Dialog */}
+      <AlertDialog open={resetToursDialogOpen} onOpenChange={setResetToursDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset All Tours?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will clear your tour history and show all onboarding hints again when you visit each section. This is useful if you want to review the features or if you're helping someone else learn the app.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleResetTours}>
+              Reset Tours
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }

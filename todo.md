@@ -113,3 +113,22 @@
 - [x] Add "empty cycle" indicator in dropdown ("Empty" badge for cycles with 0 goals)
 - [x] Update tests to clean up test data after running (afterAll cleanup in all test files)
 - [x] Add integration test for cycle ordering with mixed empty/populated cycles
+
+## Cycle Management Enhancements (Phase 13)
+- [x] Add "Delete Cycle" button to remove unwanted empty cycles from UI
+- [x] Add confirmation dialog before deleting a cycle
+- [x] Add cycle archiving feature to hide completed cycles while preserving history
+- [x] Add "Show/Hide Archived" filter in cycle dropdown
+- [x] Add "Unarchive" option to restore archived cycles
+
+## Data Export Feature (Phase 14)
+- [x] Add export button in Settings page
+- [x] Export cycle data as JSON (full data backup)
+- [ ] Export cycle data as PDF (printable summary) - future enhancement
+- [x] Include goals, tactics, scores, and reviews in export
+
+## Settings Enhancements (Phase 15)
+- [x] Add "Reset All Tours" button to clear tour history
+- [x] Show confirmation before resetting tours
+- [x] Add progress indicators showing sections explored vs total
+- [x] Display exploration progress in Settings with badges

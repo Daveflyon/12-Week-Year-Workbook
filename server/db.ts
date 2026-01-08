@@ -147,6 +147,37 @@ export async function updateCycle(cycleId: number, userId: number, data: Partial
   await db.update(cycles).set(data).where(and(eq(cycles.id, cycleId), eq(cycles.userId, userId)));
 }
 
+export async function deleteCycle(cycleId: number, userId: number): Promise<void> {
+  const db = await getDb();
+  if (!db) return;
+  
+  // Delete all related data in order (respecting foreign key constraints)
+  // 1. Delete tactic entries for tactics in goals of this cycle
+  const cycleGoals = await db.select().from(goals).where(eq(goals.cycleId, cycleId));
+  for (const goal of cycleGoals) {
+    const goalTactics = await db.select().from(tactics).where(eq(tactics.goalId, goal.id));
+    for (const tactic of goalTactics) {
+      await db.delete(tacticEntries).where(eq(tacticEntries.tacticId, tactic.id));
+    }
+    await db.delete(tactics).where(eq(tactics.goalId, goal.id));
+  }
+  
+  // 2. Delete goals
+  await db.delete(goals).where(eq(goals.cycleId, cycleId));
+  
+  // 3. Delete other cycle-related data
+  await db.delete(visions).where(eq(visions.cycleId, cycleId));
+  await db.delete(performanceBlocks).where(eq(performanceBlocks.cycleId, cycleId));
+  await db.delete(checklistItems).where(eq(checklistItems.cycleId, cycleId));
+  await db.delete(weeklyScores).where(eq(weeklyScores.cycleId, cycleId));
+  await db.delete(weeklyReviews).where(eq(weeklyReviews.cycleId, cycleId));
+  await db.delete(cycleReviews).where(eq(cycleReviews.cycleId, cycleId));
+  await db.delete(wamRecords).where(eq(wamRecords.cycleId, cycleId));
+  
+  // 4. Finally delete the cycle itself (only if owned by user)
+  await db.delete(cycles).where(and(eq(cycles.id, cycleId), eq(cycles.userId, userId)));
+}
+
 // Vision functions
 export async function upsertVision(vision: InsertVision): Promise<Vision> {
   const db = await getDb();
@@ -267,6 +298,14 @@ export async function getTacticEntriesByWeek(tacticId: number, userId: number, w
   ).orderBy(tacticEntries.dayOfWeek);
 }
 
+export async function getTacticEntriesByTactic(tacticId: number, userId: number): Promise<TacticEntry[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(tacticEntries).where(
+    and(eq(tacticEntries.tacticId, tacticId), eq(tacticEntries.userId, userId))
+  ).orderBy(tacticEntries.weekNumber, tacticEntries.dayOfWeek);
+}
+
 export async function getAllTacticEntriesForCycle(cycleId: number, userId: number): Promise<TacticEntry[]> {
   const db = await getDb();
   if (!db) return [];
@@ -341,6 +380,14 @@ export async function getWeeklyReview(cycleId: number, userId: number, weekNumbe
     and(eq(weeklyReviews.cycleId, cycleId), eq(weeklyReviews.userId, userId), eq(weeklyReviews.weekNumber, weekNumber))
   ).limit(1);
   return result[0];
+}
+
+export async function getWeeklyReviewsByCycle(cycleId: number, userId: number): Promise<WeeklyReview[]> {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(weeklyReviews).where(
+    and(eq(weeklyReviews.cycleId, cycleId), eq(weeklyReviews.userId, userId))
+  ).orderBy(weeklyReviews.weekNumber);
 }
 
 // Performance Block functions
