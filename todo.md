@@ -67,3 +67,11 @@
 - [x] Add repeat pattern selector to Add Block dialog (Weekdays, All Days, Weekends, Custom)
 - [x] Allow custom day selection with checkboxes
 - [x] Create multiple blocks at once for selected days
+
+## Bulk Operations Enhancement (Phase 7)
+- [x] Performance Blocks: Add multi-day selection to Edit dialog
+- [x] Performance Blocks: Add "Apply to all similar blocks" option
+- [x] Scorecard: Add Quick Fill feature for bulk day selection
+- [x] Scorecard: Add weekdays/weekends/all/custom fill patterns
+- [x] Checklist: Add "Check All" / "Uncheck All" buttons
+- [x] Checklist: Bulk update all items in parallel

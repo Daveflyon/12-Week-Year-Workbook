@@ -46,7 +46,7 @@ const BLOCK_TYPES = [
 type RepeatPattern = 'single' | 'weekdays' | 'weekends' | 'all' | 'custom';
 
 const REPEAT_PATTERNS = [
-  { value: 'single', label: 'Single Day', description: 'Just one day' },
+  { value: 'single', label: 'This Day Only', description: 'Just this one day' },
   { value: 'weekdays', label: 'Weekdays', description: 'Monday to Friday' },
   { value: 'weekends', label: 'Weekends', description: 'Saturday & Sunday' },
   { value: 'all', label: 'Every Day', description: 'All 7 days' },
@@ -73,11 +73,13 @@ function getSelectedDays(pattern: RepeatPattern, customDays: number[], singleDay
 function BlockForm({ 
   cycleId, 
   block, 
-  onClose 
+  onClose,
+  allBlocks,
 }: { 
   cycleId: number; 
   block?: any; 
   onClose: () => void;
+  allBlocks?: any[];
 }) {
   const [blockType, setBlockType] = useState<'strategic' | 'buffer' | 'breakout'>(block?.blockType || 'strategic');
   const [repeatPattern, setRepeatPattern] = useState<RepeatPattern>(block ? 'single' : 'weekdays');
@@ -89,6 +91,7 @@ function BlockForm({
 
   const createBlock = trpc.performanceBlock.create.useMutation();
   const updateBlock = trpc.performanceBlock.update.useMutation();
+  const bulkUpdateBlock = trpc.performanceBlock.bulkUpdate.useMutation();
   const utils = trpc.useUtils();
 
   const toggleCustomDay = (dayIndex: number) => {
@@ -101,19 +104,50 @@ function BlockForm({
 
   const selectedDays = getSelectedDays(repeatPattern, customDays, singleDay);
 
+  // For edit mode, find similar blocks on other days
+  const similarBlockDays = block && allBlocks 
+    ? allBlocks
+        .filter(b => b.blockType === block.blockType && b.startTime === block.startTime && b.id !== block.id)
+        .map(b => b.dayOfWeek)
+    : [];
+
   const handleSubmit = async () => {
     try {
       if (block) {
-        // Update existing block (single day only)
-        await updateBlock.mutateAsync({
-          blockId: block.id,
-          blockType,
-          dayOfWeek: singleDay,
-          startTime,
-          endTime,
-          description,
-        });
-        toast.success("Block updated");
+        // Editing existing block
+        if (repeatPattern === 'single') {
+          // Update just this block
+          await updateBlock.mutateAsync({
+            blockId: block.id,
+            blockType,
+            dayOfWeek: singleDay,
+            startTime,
+            endTime,
+            description,
+          });
+          toast.success("Block updated");
+        } else {
+          // Bulk update - apply to multiple days
+          const daysToUpdate = selectedDays;
+          
+          if (daysToUpdate.length === 0) {
+            toast.error("Please select at least one day");
+            return;
+          }
+
+          await bulkUpdateBlock.mutateAsync({
+            cycleId,
+            sourceBlockId: block.id,
+            targetDays: daysToUpdate,
+            blockType,
+            startTime,
+            endTime,
+            description,
+          });
+          
+          const dayNames = daysToUpdate.map(d => SHORT_DAYS[d]).join(', ');
+          toast.success(`Block${daysToUpdate.length > 1 ? 's' : ''} updated for ${dayNames}`);
+        }
       } else {
         // Create new blocks for all selected days
         const daysToCreate = selectedDays;
@@ -145,6 +179,8 @@ function BlockForm({
     }
   };
 
+  const isLoading = createBlock.isPending || updateBlock.isPending || bulkUpdateBlock.isPending;
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -169,30 +205,33 @@ function BlockForm({
         </p>
       </div>
 
-      {/* Repeat Pattern - only show for new blocks */}
-      {!block && (
-        <div className="space-y-2">
-          <Label>Repeat</Label>
-          <Select value={repeatPattern} onValueChange={(v: RepeatPattern) => setRepeatPattern(v)}>
-            <SelectTrigger className="bg-input border-border">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {REPEAT_PATTERNS.map(pattern => (
-                <SelectItem key={pattern.value} value={pattern.value}>
-                  <div className="flex flex-col">
-                    <span>{pattern.label}</span>
-                    <span className="text-xs text-muted-foreground">{pattern.description}</span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      )}
+      {/* Apply To / Repeat Pattern - show for both create and edit */}
+      <div className="space-y-2">
+        <Label>{block ? 'Apply Changes To' : 'Repeat'}</Label>
+        <Select value={repeatPattern} onValueChange={(v: RepeatPattern) => setRepeatPattern(v)}>
+          <SelectTrigger className="bg-input border-border">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {REPEAT_PATTERNS.map(pattern => (
+              <SelectItem key={pattern.value} value={pattern.value}>
+                <div className="flex flex-col">
+                  <span>{pattern.label}</span>
+                  <span className="text-xs text-muted-foreground">{pattern.description}</span>
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {block && similarBlockDays.length > 0 && (
+          <p className="text-xs text-muted-foreground">
+            Similar blocks exist on: {similarBlockDays.map(d => SHORT_DAYS[d]).join(', ')}
+          </p>
+        )}
+      </div>
 
-      {/* Single Day Selector - only show when editing or single day pattern */}
-      {(block || repeatPattern === 'single') && (
+      {/* Single Day Selector - only show when single day pattern */}
+      {repeatPattern === 'single' && (
         <div className="space-y-2">
           <Label>Day of Week</Label>
           <Select value={singleDay.toString()} onValueChange={(v) => setSingleDay(parseInt(v))}>
@@ -210,8 +249,8 @@ function BlockForm({
         </div>
       )}
 
-      {/* Custom Day Selector - only show for custom pattern */}
-      {!block && repeatPattern === 'custom' && (
+      {/* Custom Day Selector - show for custom pattern */}
+      {repeatPattern === 'custom' && (
         <div className="space-y-2">
           <Label>Select Days</Label>
           <div className="grid grid-cols-7 gap-2">
@@ -242,11 +281,11 @@ function BlockForm({
         </div>
       )}
 
-      {/* Preview of selected days for non-custom patterns */}
-      {!block && repeatPattern !== 'single' && repeatPattern !== 'custom' && (
+      {/* Preview of selected days for non-custom, non-single patterns */}
+      {repeatPattern !== 'single' && repeatPattern !== 'custom' && (
         <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
           <p className="text-sm text-primary">
-            <span className="font-medium">Will create blocks for:</span>{' '}
+            <span className="font-medium">{block ? 'Will update blocks for:' : 'Will create blocks for:'}</span>{' '}
             {selectedDays.map(d => SHORT_DAYS[d]).join(', ')}
           </p>
         </div>
@@ -287,10 +326,13 @@ function BlockForm({
         <Button variant="outline" onClick={onClose}>Cancel</Button>
         <Button 
           onClick={handleSubmit}
-          disabled={createBlock.isPending || updateBlock.isPending || (!block && repeatPattern === 'custom' && customDays.length === 0)}
+          disabled={isLoading || (repeatPattern === 'custom' && customDays.length === 0)}
           className="gradient-primary text-primary-foreground"
         >
-          {block ? "Update Block" : `Create Block${selectedDays.length > 1 ? 's' : ''}`}
+          {block 
+            ? (repeatPattern === 'single' ? "Update Block" : `Update ${selectedDays.length} Block${selectedDays.length > 1 ? 's' : ''}`)
+            : `Create Block${selectedDays.length > 1 ? 's' : ''}`
+          }
         </Button>
       </DialogFooter>
     </div>
@@ -478,13 +520,14 @@ export default function PerformanceBlocks() {
             <DialogHeader>
               <DialogTitle>Edit Performance Block</DialogTitle>
               <DialogDescription>
-                Update your block details.
+                Update your block details. Choose to apply changes to this day only, or to multiple days at once.
               </DialogDescription>
             </DialogHeader>
             {editingBlock && (
               <BlockForm 
                 cycleId={activeCycle.id} 
                 block={editingBlock}
+                allBlocks={blocks}
                 onClose={() => setEditingBlock(null)} 
               />
             )}

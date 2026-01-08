@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { trpc } from "@/lib/trpc";
-import { CheckSquare, Quote, Rocket, ArrowRight } from "lucide-react";
+import { CheckSquare, Quote, Rocket, ArrowRight, CheckCheck, XCircle, Zap } from "lucide-react";
 import { useState } from "react";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
@@ -33,6 +33,36 @@ export default function Checklist() {
     } catch (error) {
       toast.error("Failed to update checklist");
     }
+  };
+
+  const handleBulkUpdate = async (items: { id: number }[], isCompleted: boolean) => {
+    if (!items.length) return;
+    
+    try {
+      // Update all items in parallel
+      await Promise.all(
+        items.map(item => updateItem.mutateAsync({ itemId: item.id, isCompleted }))
+      );
+      utils.checklist.get.invalidate();
+      toast.success(isCompleted 
+        ? `Marked ${items.length} item${items.length > 1 ? 's' : ''} as complete` 
+        : `Unmarked ${items.length} item${items.length > 1 ? 's' : ''}`
+      );
+    } catch (error) {
+      toast.error("Failed to update checklist");
+    }
+  };
+
+  const handleCheckAll = () => {
+    if (!checklist) return;
+    const uncheckedItems = checklist.filter(item => !item.isCompleted);
+    handleBulkUpdate(uncheckedItems, true);
+  };
+
+  const handleUncheckAll = () => {
+    if (!checklist) return;
+    const checkedItems = checklist.filter(item => item.isCompleted);
+    handleBulkUpdate(checkedItems, false);
   };
 
   const completedCount = checklist?.filter(item => item.isCompleted).length ?? 0;
@@ -134,10 +164,39 @@ export default function Checklist() {
         {/* Checklist Items - Rendered directly from database */}
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-lg">Pre-Cycle Readiness Items</CardTitle>
-            <CardDescription>
-              Tick each item as you complete it to track your readiness
-            </CardDescription>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <CardTitle className="text-lg">Pre-Cycle Readiness Items</CardTitle>
+                <CardDescription>
+                  Tick each item as you complete it to track your readiness
+                </CardDescription>
+              </div>
+              {/* Bulk Action Buttons */}
+              {checklist && checklist.length > 0 && (
+                <div className="flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCheckAll}
+                    disabled={completedCount === totalCount || updateItem.isPending}
+                    className="text-xs"
+                  >
+                    <CheckCheck className="mr-1 h-3 w-3" />
+                    Check All
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleUncheckAll}
+                    disabled={completedCount === 0 || updateItem.isPending}
+                    className="text-xs"
+                  >
+                    <XCircle className="mr-1 h-3 w-3" />
+                    Uncheck All
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             {isLoading ? (

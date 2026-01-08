@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { trpc } from "@/lib/trpc";
-import { ClipboardCheck, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Quote, Save, Download } from "lucide-react";
+import { ClipboardCheck, ChevronLeft, ChevronRight, CheckCircle2, AlertCircle, Quote, Save, Download, Zap, Copy } from "lucide-react";
 import { useState, useEffect, useMemo } from "react";
 import { useParams } from "wouter";
 import { toast } from "sonner";
@@ -29,7 +31,7 @@ const SCORECARD_TOUR_STEPS: TourStep[] = [
   {
     target: "[data-tour='tactic-grid']",
     title: "Daily Tracking",
-    content: "Enter your daily progress for each tactic. The grid shows all 7 days of the week.",
+    content: "Enter your daily progress for each tactic. Use the Quick Fill button to apply values to multiple days at once.",
     position: "top",
   },
   {
@@ -41,6 +43,16 @@ const SCORECARD_TOUR_STEPS: TourStep[] = [
 ];
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const FULL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+type FillPattern = 'weekdays' | 'weekends' | 'all' | 'custom';
+
+const FILL_PATTERNS = [
+  { value: 'weekdays', label: 'Weekdays', description: 'Monday to Friday', days: [0, 1, 2, 3, 4] },
+  { value: 'weekends', label: 'Weekends', description: 'Saturday & Sunday', days: [5, 6] },
+  { value: 'all', label: 'Every Day', description: 'All 7 days', days: [0, 1, 2, 3, 4, 5, 6] },
+  { value: 'custom', label: 'Custom', description: 'Select specific days', days: [] },
+];
 
 function getWeekDates(cycleStartDate: Date, weekNumber: number): Date[] {
   const dates: Date[] = [];
@@ -53,6 +65,144 @@ function getWeekDates(cycleStartDate: Date, weekNumber: number): Date[] {
     dates.push(date);
   }
   return dates;
+}
+
+interface QuickFillDialogProps {
+  tactic: { id: number; title: string; weeklyTarget: number };
+  onFill: (tacticId: number, days: number[], value: number) => void;
+  onClose: () => void;
+}
+
+function QuickFillDialog({ tactic, onFill, onClose }: QuickFillDialogProps) {
+  const [fillPattern, setFillPattern] = useState<FillPattern>('weekdays');
+  const [customDays, setCustomDays] = useState<number[]>([0, 1, 2, 3, 4]);
+  const [fillValue, setFillValue] = useState(1);
+
+  const toggleCustomDay = (dayIndex: number) => {
+    setCustomDays(prev => 
+      prev.includes(dayIndex) 
+        ? prev.filter(d => d !== dayIndex)
+        : [...prev, dayIndex].sort((a, b) => a - b)
+    );
+  };
+
+  const selectedDays = fillPattern === 'custom' 
+    ? customDays 
+    : FILL_PATTERNS.find(p => p.value === fillPattern)?.days || [];
+
+  const handleFill = () => {
+    if (selectedDays.length === 0) {
+      toast.error("Please select at least one day");
+      return;
+    }
+    onFill(tactic.id, selectedDays, fillValue);
+    onClose();
+    toast.success(`Filled ${selectedDays.length} day${selectedDays.length > 1 ? 's' : ''} with ${fillValue}`);
+  };
+
+  return (
+    <DialogContent className="bg-card border-border">
+      <DialogHeader>
+        <DialogTitle className="flex items-center gap-2">
+          <Zap className="h-5 w-5 text-primary" />
+          Quick Fill: {tactic.title}
+        </DialogTitle>
+        <DialogDescription>
+          Apply the same value to multiple days at once. Weekly target: {tactic.weeklyTarget}
+        </DialogDescription>
+      </DialogHeader>
+
+      <div className="space-y-4">
+        <div className="space-y-2">
+          <Label>Value to Fill</Label>
+          <Input
+            type="number"
+            min="0"
+            value={fillValue}
+            onChange={(e) => setFillValue(parseInt(e.target.value) || 0)}
+            className="bg-input border-border w-24"
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label>Apply To</Label>
+          <Select value={fillPattern} onValueChange={(v: FillPattern) => setFillPattern(v)}>
+            <SelectTrigger className="bg-input border-border">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {FILL_PATTERNS.map(pattern => (
+                <SelectItem key={pattern.value} value={pattern.value}>
+                  <div className="flex flex-col">
+                    <span>{pattern.label}</span>
+                    <span className="text-xs text-muted-foreground">{pattern.description}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Custom Day Selector */}
+        {fillPattern === 'custom' && (
+          <div className="space-y-2">
+            <Label>Select Days</Label>
+            <div className="grid grid-cols-7 gap-2">
+              {FULL_DAYS.map((day, index) => (
+                <div 
+                  key={index}
+                  className={`flex flex-col items-center p-2 rounded-lg border cursor-pointer transition-colors ${
+                    customDays.includes(index) 
+                      ? 'bg-primary/20 border-primary text-primary' 
+                      : 'bg-input border-border hover:border-primary/50'
+                  }`}
+                  onClick={() => toggleCustomDay(index)}
+                >
+                  <Checkbox 
+                    checked={customDays.includes(index)}
+                    className="mb-1"
+                    onCheckedChange={() => toggleCustomDay(index)}
+                  />
+                  <span className="text-xs font-medium">{DAYS[index]}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Preview */}
+        {fillPattern !== 'custom' && (
+          <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+            <p className="text-sm text-primary">
+              <span className="font-medium">Will fill:</span>{' '}
+              {selectedDays.map(d => DAYS[d]).join(', ')} with value {fillValue}
+            </p>
+          </div>
+        )}
+
+        {fillPattern === 'custom' && customDays.length > 0 && (
+          <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+            <p className="text-sm text-primary">
+              <span className="font-medium">Will fill:</span>{' '}
+              {customDays.map(d => DAYS[d]).join(', ')} with value {fillValue}
+            </p>
+          </div>
+        )}
+      </div>
+
+      <DialogFooter>
+        <Button variant="outline" onClick={onClose}>Cancel</Button>
+        <Button 
+          onClick={handleFill}
+          disabled={selectedDays.length === 0}
+          className="gradient-primary text-primary-foreground"
+        >
+          <Zap className="mr-2 h-4 w-4" />
+          Fill {selectedDays.length} Day{selectedDays.length !== 1 ? 's' : ''}
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  );
 }
 
 export default function Scorecard() {
@@ -68,6 +218,7 @@ export default function Scorecard() {
   const [selectedWeek, setSelectedWeek] = useState(
     params.weekNumber ? parseInt(params.weekNumber) : currentWeekFromCycle
   );
+  const [quickFillTactic, setQuickFillTactic] = useState<any>(null);
 
   const { data: tactics } = trpc.tactic.listByCycle.useQuery(
     { cycleId: activeCycle?.id ?? 0 },
@@ -155,6 +306,17 @@ export default function Scorecard() {
   const handleEntryChange = async (tacticId: number, dayOfWeek: number, value: number) => {
     const key = `${tacticId}-${selectedWeek}-${dayOfWeek}`;
     setLocalEntries(prev => ({ ...prev, [key]: value }));
+  };
+
+  const handleQuickFill = (tacticId: number, days: number[], value: number) => {
+    setLocalEntries(prev => {
+      const updated = { ...prev };
+      days.forEach(day => {
+        const key = `${tacticId}-${selectedWeek}-${day}`;
+        updated[key] = value;
+      });
+      return updated;
+    });
   };
 
   const handleSave = async () => {
@@ -343,7 +505,7 @@ export default function Scorecard() {
             <CardHeader>
               <CardTitle>Daily Tracking</CardTitle>
               <CardDescription>
-                Enter your completed count for each tactic per day
+                Enter your completed count for each tactic per day. Use the Quick Fill button to apply values to multiple days at once.
               </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
@@ -363,6 +525,7 @@ export default function Scorecard() {
                       ))}
                       <th className="text-center p-4 font-medium w-20">Total</th>
                       <th className="text-center p-4 font-medium w-20">%</th>
+                      <th className="text-center p-4 font-medium w-16">Fill</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -411,6 +574,17 @@ export default function Scorecard() {
                               {percentage.toFixed(0)}%
                             </span>
                           </td>
+                          <td className="text-center p-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setQuickFillTactic(tactic)}
+                              className="h-8 w-8 text-primary hover:bg-primary/10"
+                              title="Quick Fill"
+                            >
+                              <Zap className="h-4 w-4" />
+                            </Button>
+                          </td>
                         </tr>
                       );
                     })}
@@ -430,6 +604,17 @@ export default function Scorecard() {
             </CardContent>
           </Card>
         )}
+
+        {/* Quick Fill Dialog */}
+        <Dialog open={!!quickFillTactic} onOpenChange={(open) => !open && setQuickFillTactic(null)}>
+          {quickFillTactic && (
+            <QuickFillDialog
+              tactic={quickFillTactic}
+              onFill={handleQuickFill}
+              onClose={() => setQuickFillTactic(null)}
+            />
+          )}
+        </Dialog>
       </div>
     </AppLayout>
   );

@@ -358,6 +358,59 @@ export const appRouter = router({
         return { success: true };
       }),
     
+    bulkUpdate: protectedProcedure
+      .input(z.object({
+        cycleId: z.number(),
+        sourceBlockId: z.number(),
+        targetDays: z.array(z.number().min(0).max(6)),
+        blockType: z.enum(["strategic", "buffer", "breakout"]).optional(),
+        startTime: z.string().optional(),
+        endTime: z.string().optional(),
+        description: z.string().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const { cycleId, sourceBlockId, targetDays, ...updateData } = input;
+        let updatedCount = 0;
+        
+        // Get all blocks for this cycle
+        const allBlocks = await db.getPerformanceBlocksByCycle(cycleId, ctx.user.id);
+        const sourceBlock = allBlocks.find(b => b.id === sourceBlockId);
+        
+        if (!sourceBlock) {
+          throw new Error("Source block not found");
+        }
+        
+        // Find similar blocks (same type and time) on target days
+        for (const day of targetDays) {
+          const existingBlock = allBlocks.find(
+            b => b.dayOfWeek === day && 
+                 b.blockType === sourceBlock.blockType &&
+                 b.startTime === sourceBlock.startTime
+          );
+          
+          if (existingBlock) {
+            // Update existing block
+            await db.updatePerformanceBlock(existingBlock.id, ctx.user.id, updateData);
+            updatedCount++;
+          } else {
+            // Create new block on this day
+            await db.createPerformanceBlock({
+              userId: ctx.user.id,
+              cycleId,
+              blockType: updateData.blockType || sourceBlock.blockType,
+              dayOfWeek: day,
+              startTime: updateData.startTime || sourceBlock.startTime,
+              endTime: updateData.endTime || sourceBlock.endTime,
+              description: updateData.description ?? sourceBlock.description,
+              isRecurring: true,
+            });
+            updatedCount++;
+          }
+        }
+        
+        return { success: true, updatedCount };
+      }),
+    
     delete: protectedProcedure
       .input(z.object({ blockId: z.number() }))
       .mutation(async ({ ctx, input }) => {
