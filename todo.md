@@ -169,3 +169,6 @@
 - [x] Add "Use Template" option when creating a new cycle
 - [x] Pre-populate goals and tactics from selected template
 - [x] Allow users to customise template content after selection
+
+## Bug Fix - Dashboard TypeError (Phase 21)
+- [x] Fix userAverageScore.toFixed is not a function error on Dashboard after sign-in

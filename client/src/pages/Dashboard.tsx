@@ -505,15 +505,15 @@ export default function Dashboard() {
                 <div>
                   <p className="text-sm text-muted-foreground">vs. Community</p>
                   <p className="text-3xl font-bold mt-1">
-                    {((stats?.userAverageScore ?? 0) - (stats?.globalAverageScore ?? 85)).toFixed(0)}%
+                    {(Number(stats?.userAverageScore ?? 0) - Number(stats?.globalAverageScore ?? 85)).toFixed(0)}%
                   </p>
                 </div>
                 <Users className="h-8 w-8 text-primary/40" />
               </div>
               <div className="mt-4">
                 <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                  <span>You: {stats?.userAverageScore?.toFixed(0) ?? 0}%</span>
-                  <span>Avg: {stats?.globalAverageScore?.toFixed(0) ?? 85}%</span>
+                  <span>You: {Number(stats?.userAverageScore ?? 0).toFixed(0)}%</span>
+                  <span>Avg: {Number(stats?.globalAverageScore ?? 85).toFixed(0)}%</span>
                 </div>
                 <div className="relative h-2 bg-muted rounded-full overflow-hidden">
                   <div 

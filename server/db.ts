@@ -520,15 +520,17 @@ export async function getRecentFlashcardViews(userId: number, limit: number = 10
 export async function getGlobalAverageExecutionScore(): Promise<number> {
   const db = await getDb();
   if (!db) return 85;
-  const result = await db.select({ avg: sql<number>`AVG(CAST(${weeklyScores.executionScore} AS DECIMAL(5,2)))` }).from(weeklyScores);
-  return result[0]?.avg ?? 85;
+  const result = await db.select({ avg: sql<string>`AVG(CAST(${weeklyScores.executionScore} AS DECIMAL(5,2)))` }).from(weeklyScores);
+  const avgValue = result[0]?.avg;
+  return avgValue ? parseFloat(avgValue) : 85;
 }
 
 export async function getUserAverageExecutionScore(userId: number): Promise<number> {
   const db = await getDb();
   if (!db) return 0;
-  const result = await db.select({ avg: sql<number>`AVG(CAST(${weeklyScores.executionScore} AS DECIMAL(5,2)))` }).from(weeklyScores).where(eq(weeklyScores.userId, userId));
-  return result[0]?.avg ?? 0;
+  const result = await db.select({ avg: sql<string>`AVG(CAST(${weeklyScores.executionScore} AS DECIMAL(5,2)))` }).from(weeklyScores).where(eq(weeklyScores.userId, userId));
+  const avgValue = result[0]?.avg;
+  return avgValue ? parseFloat(avgValue) : 0;
 }
 
 // Accountability Partner functions
