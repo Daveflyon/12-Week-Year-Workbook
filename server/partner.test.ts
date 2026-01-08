@@ -1,13 +1,23 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, afterAll } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
+import { getDb } from "./db";
+import { accountabilityPartners } from "../drizzle/schema";
+import { eq } from "drizzle-orm";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
 
+// Use a unique test user ID to isolate test data
+const TEST_USER_ID = 999997;
+const TEST_USER_OPEN_ID = "test-user-partner-cleanup";
+
+// Track created partner IDs for cleanup
+const createdPartnerIds: number[] = [];
+
 function createAuthContext(): { ctx: TrpcContext } {
   const user: AuthenticatedUser = {
-    id: 1,
-    openId: "test-user-partner",
+    id: TEST_USER_ID,
+    openId: TEST_USER_OPEN_ID,
     email: "test@example.com",
     name: "Test User",
     loginMethod: "manus",
@@ -31,6 +41,32 @@ function createAuthContext(): { ctx: TrpcContext } {
   return { ctx };
 }
 
+// Cleanup function to remove test data
+async function cleanupTestData() {
+  const db = await getDb();
+  if (!db) return;
+  
+  try {
+    // Delete created partners
+    for (const partnerId of createdPartnerIds) {
+      await db.delete(accountabilityPartners).where(eq(accountabilityPartners.id, partnerId));
+    }
+    
+    // Also clean up any partners created by the test user that might have been missed
+    await db.delete(accountabilityPartners).where(eq(accountabilityPartners.userId, TEST_USER_ID));
+    
+    // Clear the tracking array
+    createdPartnerIds.length = 0;
+  } catch (error) {
+    console.warn("[Test Cleanup] Error cleaning up test data:", error);
+  }
+}
+
+// Cleanup after all tests in this file
+afterAll(async () => {
+  await cleanupTestData();
+});
+
 describe("partner router", () => {
   it("lists partners for authenticated user", async () => {
     const { ctx } = createAuthContext();
@@ -46,7 +82,7 @@ describe("partner router", () => {
     const caller = appRouter.createCaller(ctx);
 
     const partner = await caller.partner.create({
-      partnerEmail: "partner@example.com",
+      partnerEmail: "partner-test-cleanup@example.com",
       partnerName: "Test Partner",
       shareProgress: true,
       shareGoals: true,
@@ -54,8 +90,11 @@ describe("partner router", () => {
       wamTime: "10:00",
     });
 
+    // Track for cleanup
+    createdPartnerIds.push(partner.id);
+
     expect(partner).toBeDefined();
-    expect(partner.partnerEmail).toBe("partner@example.com");
+    expect(partner.partnerEmail).toBe("partner-test-cleanup@example.com");
     expect(partner.partnerName).toBe("Test Partner");
     expect(partner.status).toBe("pending");
     expect(partner.inviteToken).toBeDefined();

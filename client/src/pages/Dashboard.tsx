@@ -289,7 +289,20 @@ export default function Dashboard() {
                 <SelectContent>
                   {cycles?.map((cycle) => (
                     <SelectItem key={cycle.id} value={cycle.id.toString()}>
-                      {cycle.title}
+                      <div className="flex items-center justify-between w-full gap-2">
+                        <span className={cycle.goalCount === 0 ? 'text-muted-foreground' : ''}>
+                          {cycle.title}
+                        </span>
+                        {cycle.goalCount > 0 ? (
+                          <span className="text-xs bg-primary/20 text-primary px-1.5 py-0.5 rounded-full">
+                            {cycle.goalCount} {cycle.goalCount === 1 ? 'goal' : 'goals'}
+                          </span>
+                        ) : (
+                          <span className="text-xs bg-muted text-muted-foreground px-1.5 py-0.5 rounded-full">
+                            Empty
+                          </span>
+                        )}
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>

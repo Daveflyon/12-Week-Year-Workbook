@@ -97,20 +97,30 @@ export async function createCycle(cycle: InsertCycle): Promise<Cycle> {
   return created[0];
 }
 
-export async function getCyclesByUser(userId: number): Promise<Cycle[]> {
+// Extended Cycle type with goal count for UI display
+export type CycleWithGoalCount = Cycle & { goalCount: number };
+
+export async function getCyclesByUser(userId: number): Promise<CycleWithGoalCount[]> {
   const db = await getDb();
   if (!db) return [];
-  // Order by: cycles with goals first, then by creation date (newest first)
+  // Order by: cycles with goals first (active status preferred), then by creation date (newest first)
   const result = await db.execute(sql`
     SELECT c.*, 
            (SELECT COUNT(*) FROM goals WHERE cycleId = c.id) as goalCount
     FROM cycles c
     WHERE c.userId = ${userId}
-    ORDER BY goalCount DESC, c.createdAt DESC
+    ORDER BY 
+      CASE WHEN c.status = 'active' AND (SELECT COUNT(*) FROM goals WHERE cycleId = c.id) > 0 THEN 0
+           WHEN (SELECT COUNT(*) FROM goals WHERE cycleId = c.id) > 0 THEN 1
+           WHEN c.status = 'active' THEN 2
+           ELSE 3
+      END,
+      (SELECT COUNT(*) FROM goals WHERE cycleId = c.id) DESC,
+      c.createdAt DESC
   `) as unknown as [any[], any];
   // mysql2 returns [rows, fields], so result[0] contains the rows
   const rows = result[0];
-  // Map the raw result to Cycle type
+  // Map the raw result to CycleWithGoalCount type
   return rows.map((row: any) => ({
     id: row.id,
     userId: row.userId,
@@ -119,7 +129,8 @@ export async function getCyclesByUser(userId: number): Promise<Cycle[]> {
     endDate: row.endDate,
     status: row.status,
     createdAt: row.createdAt,
-    updatedAt: row.updatedAt
+    updatedAt: row.updatedAt,
+    goalCount: Number(row.goalCount) || 0
   }));
 }
 

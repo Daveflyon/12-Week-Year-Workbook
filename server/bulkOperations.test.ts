@@ -1,15 +1,25 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, afterAll } from "vitest";
 import { appRouter } from "./routers";
 import type { TrpcContext } from "./_core/context";
+import { getDb } from "./db";
+import { cycles, goals, tactics, performanceBlocks, checklistItems } from "../drizzle/schema";
+import { eq } from "drizzle-orm";
 
 type AuthenticatedUser = NonNullable<TrpcContext["user"]>;
+
+// Use a unique test user ID to isolate test data
+const TEST_USER_ID = 999998;
+const TEST_USER_OPEN_ID = "test-user-bulk-ops-cleanup";
+
+// Track created test cycles for cleanup
+const createdCycleIds: number[] = [];
 
 function createAuthContext(): { ctx: TrpcContext; clearedCookies: any[] } {
   const clearedCookies: any[] = [];
 
   const user: AuthenticatedUser = {
-    id: 1,
-    openId: "test-user-bulk-ops",
+    id: TEST_USER_ID,
+    openId: TEST_USER_OPEN_ID,
     email: "bulk-test@example.com",
     name: "Bulk Test User",
     loginMethod: "manus",
@@ -35,6 +45,60 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: any[] } {
   return { ctx, clearedCookies };
 }
 
+// Cleanup function to remove test data
+async function cleanupTestData() {
+  const db = await getDb();
+  if (!db) return;
+  
+  try {
+    // Delete related data for test cycles
+    for (const cycleId of createdCycleIds) {
+      // Delete performance blocks
+      await db.delete(performanceBlocks).where(eq(performanceBlocks.cycleId, cycleId));
+      
+      // Delete checklist items
+      await db.delete(checklistItems).where(eq(checklistItems.cycleId, cycleId));
+      
+      // Delete tactics for goals in this cycle
+      const cycleGoals = await db.select().from(goals).where(eq(goals.cycleId, cycleId));
+      for (const goal of cycleGoals) {
+        await db.delete(tactics).where(eq(tactics.goalId, goal.id));
+      }
+      
+      // Delete goals
+      await db.delete(goals).where(eq(goals.cycleId, cycleId));
+    }
+    
+    // Delete test cycles
+    for (const cycleId of createdCycleIds) {
+      await db.delete(cycles).where(eq(cycles.id, cycleId));
+    }
+    
+    // Also clean up any cycles created by the test user that might have been missed
+    const testUserCycles = await db.select().from(cycles).where(eq(cycles.userId, TEST_USER_ID));
+    for (const cycle of testUserCycles) {
+      await db.delete(performanceBlocks).where(eq(performanceBlocks.cycleId, cycle.id));
+      await db.delete(checklistItems).where(eq(checklistItems.cycleId, cycle.id));
+      const cycleGoals = await db.select().from(goals).where(eq(goals.cycleId, cycle.id));
+      for (const goal of cycleGoals) {
+        await db.delete(tactics).where(eq(tactics.goalId, goal.id));
+      }
+      await db.delete(goals).where(eq(goals.cycleId, cycle.id));
+      await db.delete(cycles).where(eq(cycles.id, cycle.id));
+    }
+    
+    // Clear the tracking array
+    createdCycleIds.length = 0;
+  } catch (error) {
+    console.warn("[Test Cleanup] Error cleaning up test data:", error);
+  }
+}
+
+// Cleanup after all tests in this file
+afterAll(async () => {
+  await cleanupTestData();
+});
+
 describe("performanceBlock.bulkUpdate", () => {
   it("should create blocks on multiple days when source block exists", async () => {
     const { ctx } = createAuthContext();
@@ -50,6 +114,9 @@ describe("performanceBlock.bulkUpdate", () => {
       startDate,
       endDate,
     });
+
+    // Track for cleanup
+    createdCycleIds.push(cycle.id);
 
     // Create a source block on Monday
     const sourceBlock = await caller.performanceBlock.create({
@@ -102,6 +169,9 @@ describe("performanceBlock.bulkUpdate", () => {
       startDate,
       endDate,
     });
+
+    // Track for cleanup
+    createdCycleIds.push(cycle.id);
 
     // Create blocks on Monday and Tuesday
     const mondayBlock = await caller.performanceBlock.create({
@@ -160,6 +230,9 @@ describe("checklist bulk operations", () => {
       startDate,
       endDate,
     });
+
+    // Track for cleanup
+    createdCycleIds.push(cycle.id);
 
     // Get checklist items
     const checklist = await caller.checklist.get({ cycleId: cycle.id });

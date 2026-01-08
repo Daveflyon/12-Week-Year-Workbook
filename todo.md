@@ -105,3 +105,11 @@
 - [x] Deleted 42 test cycles from David's account
 - [x] David now has 1 cycle with goal "Achieve £20,000 Monthly Revenue" and 6 tactics
 - [x] Data visibility restored successfully
+
+## Robustness Improvements - Prevent Cycle Visibility Issues (Phase 12)
+- [x] Better default cycle selection: prefer cycles with goals > active status > most recent
+- [x] Add goal count to cycle list API response (CycleWithGoalCount type)
+- [x] Show goal count badges in cycle selector dropdown ("X goals" badge)
+- [x] Add "empty cycle" indicator in dropdown ("Empty" badge for cycles with 0 goals)
+- [x] Update tests to clean up test data after running (afterAll cleanup in all test files)
+- [x] Add integration test for cycle ordering with mixed empty/populated cycles

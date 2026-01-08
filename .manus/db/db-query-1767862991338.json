@@ -1,0 +1,9 @@
+{
+  "query": "\nDELETE FROM tactics WHERE goalId IN (\n  SELECT g.id FROM goals g\n  JOIN cycles c ON g.cycleId = c.id\n  WHERE c.userId = 1 AND c.id != 60011 AND (c.title LIKE '%Test%' OR c.title LIKE '%Bulk%')\n);\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user iNhAe1dL1wzAkH4.root --database 7YT5AjFkoqfS5QKmXhFci2 --execute \nDELETE FROM tactics WHERE goalId IN (\n  SELECT g.id FROM goals g\n  JOIN cycles c ON g.cycleId = c.id\n  WHERE c.userId = 1 AND c.id != 60011 AND (c.title LIKE '%Test%' OR c.title LIKE '%Bulk%')\n);\n",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1652
+}
