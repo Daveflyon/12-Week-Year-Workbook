@@ -126,6 +126,236 @@ export function generateScorecardHTML(data: WeeklyScoreData, cycleName: string):
   `;
 }
 
+export interface FullCycleSummaryData {
+  cycleTitle: string;
+  startDate: Date;
+  endDate: Date;
+  currentWeek: number;
+  vision: {
+    longTermVision: string;
+    threeYearVision: string;
+    oneYearGoals: string;
+    twelveWeekGoals: string;
+  } | null;
+  goals: {
+    title: string;
+    lagIndicator: string;
+    lagTarget: string;
+    lagCurrentValue: string;
+    tactics: {
+      title: string;
+      weeklyTarget: number;
+    }[];
+  }[];
+  weeklyScores: { weekNumber: number; score: number }[];
+  averageScore: number;
+  performanceBlocks: {
+    blockType: string;
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+    description: string;
+  }[];
+}
+
+export function generateFullCycleSummaryHTML(data: FullCycleSummaryData): string {
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const avgScore = data.averageScore || 0;
+  const scoreColor = avgScore >= 85 ? '#10b981' : avgScore >= 70 ? '#f59e0b' : '#ef4444';
+  const weeksOnTarget = data.weeklyScores.filter(s => s.score >= 85).length;
+  
+  const goalsSection = data.goals.map((g, i) => `
+    <div style="background: #f9fafb; padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+      <div style="display: flex; align-items: flex-start; gap: 12px;">
+        <span style="background: #10b981; color: white; min-width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 600;">${i + 1}</span>
+        <div style="flex: 1;">
+          <div style="font-weight: 600; margin-bottom: 4px;">${g.title}</div>
+          <div style="color: #6b7280; font-size: 14px; margin-bottom: 8px;">${g.lagIndicator}: ${g.lagCurrentValue || '0'} / ${g.lagTarget || 'N/A'}</div>
+          ${g.tactics.length > 0 ? `
+            <div style="font-size: 13px; color: #374151;">
+              <strong>Tactics:</strong>
+              <ul style="margin: 4px 0 0 0; padding-left: 20px;">
+                ${g.tactics.map(t => `<li>${t.title} (${t.weeklyTarget}x/week)</li>`).join('')}
+              </ul>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  const scoreChart = data.weeklyScores.slice(0, 12).map(s => {
+    const height = Math.max(10, (s.score / 100) * 100);
+    const color = s.score >= 85 ? '#10b981' : s.score >= 70 ? '#f59e0b' : '#ef4444';
+    return `
+      <div style="display: flex; flex-direction: column; align-items: center; gap: 4px;">
+        <div style="font-size: 10px; font-weight: 600;">${s.score.toFixed(0)}%</div>
+        <div style="width: 32px; height: 80px; background: #e5e7eb; border-radius: 4px; display: flex; flex-direction: column-reverse;">
+          <div style="width: 100%; height: ${height}%; background: ${color}; border-radius: 4px;"></div>
+        </div>
+        <span style="font-size: 11px; color: #6b7280;">W${s.weekNumber}</span>
+      </div>
+    `;
+  }).join('');
+
+  const blocksSection = data.performanceBlocks.length > 0 ? `
+    <table style="width: 100%; border-collapse: collapse; margin-top: 8px;">
+      <thead>
+        <tr style="background: #f3f4f6;">
+          <th style="padding: 8px; text-align: left; border-bottom: 2px solid #e5e7eb;">Type</th>
+          <th style="padding: 8px; text-align: left; border-bottom: 2px solid #e5e7eb;">Day</th>
+          <th style="padding: 8px; text-align: left; border-bottom: 2px solid #e5e7eb;">Time</th>
+          <th style="padding: 8px; text-align: left; border-bottom: 2px solid #e5e7eb;">Description</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.performanceBlocks.map(b => `
+          <tr>
+            <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">
+              <span style="background: ${b.blockType === 'strategic' ? '#10b981' : b.blockType === 'buffer' ? '#f59e0b' : '#8b5cf6'}; color: white; padding: 2px 8px; border-radius: 4px; font-size: 12px;">
+                ${b.blockType.charAt(0).toUpperCase() + b.blockType.slice(1)}
+              </span>
+            </td>
+            <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${dayNames[b.dayOfWeek]}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${b.startTime} - ${b.endTime}</td>
+            <td style="padding: 8px; border-bottom: 1px solid #e5e7eb;">${b.description || '-'}</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  ` : '<p style="color: #6b7280;">No performance blocks scheduled.</p>';
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <title>${data.cycleTitle} - Full Summary</title>
+      <style>
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 40px;
+          color: #1f2937;
+        }
+        h1 { color: #10b981; margin-bottom: 8px; }
+        h2 { color: #374151; margin-top: 32px; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
+        .subtitle { color: #6b7280; margin-bottom: 32px; }
+        .stats-grid {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 16px;
+          margin-bottom: 32px;
+        }
+        .stat-card {
+          background: #f9fafb;
+          padding: 16px;
+          border-radius: 12px;
+          text-align: center;
+        }
+        .stat-value { font-size: 28px; font-weight: 700; color: #10b981; }
+        .stat-label { color: #6b7280; font-size: 13px; }
+        .vision-section {
+          background: #f9fafb;
+          padding: 16px;
+          border-radius: 8px;
+          margin-bottom: 12px;
+        }
+        .vision-title { font-weight: 600; margin-bottom: 4px; color: #374151; }
+        .vision-content { color: #6b7280; font-size: 14px; white-space: pre-wrap; }
+        .chart-container {
+          display: flex;
+          gap: 8px;
+          justify-content: center;
+          padding: 20px;
+          background: #f9fafb;
+          border-radius: 12px;
+        }
+        .footer {
+          margin-top: 40px;
+          padding-top: 20px;
+          border-top: 1px solid #e5e7eb;
+          color: #9ca3af;
+          font-size: 12px;
+          text-align: center;
+        }
+        @media print {
+          body { padding: 20px; }
+          h2 { page-break-before: auto; }
+        }
+      </style>
+    </head>
+    <body>
+      <h1>${data.cycleTitle}</h1>
+      <p class="subtitle">${new Date(data.startDate).toLocaleDateString()} - ${new Date(data.endDate).toLocaleDateString()} • Week ${data.currentWeek} of 12</p>
+      
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" style="color: ${scoreColor};">${avgScore.toFixed(0)}%</div>
+          <div class="stat-label">Average Score</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${weeksOnTarget}</div>
+          <div class="stat-label">Weeks On Target</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${data.goals.length}</div>
+          <div class="stat-label">Goals</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${data.goals.reduce((sum, g) => sum + g.tactics.length, 0)}</div>
+          <div class="stat-label">Tactics</div>
+        </div>
+      </div>
+      
+      <h2>Weekly Progress</h2>
+      <div class="chart-container">
+        ${scoreChart || '<p style="color: #6b7280;">No scores recorded yet.</p>'}
+      </div>
+      
+      ${data.vision ? `
+        <h2>Vision</h2>
+        ${data.vision.longTermVision ? `
+          <div class="vision-section">
+            <div class="vision-title">Long-Term Vision</div>
+            <div class="vision-content">${data.vision.longTermVision}</div>
+          </div>
+        ` : ''}
+        ${data.vision.threeYearVision ? `
+          <div class="vision-section">
+            <div class="vision-title">3-Year Vision</div>
+            <div class="vision-content">${data.vision.threeYearVision}</div>
+          </div>
+        ` : ''}
+        ${data.vision.oneYearGoals ? `
+          <div class="vision-section">
+            <div class="vision-title">1-Year Goals</div>
+            <div class="vision-content">${data.vision.oneYearGoals}</div>
+          </div>
+        ` : ''}
+        ${data.vision.twelveWeekGoals ? `
+          <div class="vision-section">
+            <div class="vision-title">12-Week Goals</div>
+            <div class="vision-content">${data.vision.twelveWeekGoals}</div>
+          </div>
+        ` : ''}
+      ` : ''}
+      
+      <h2>Goals & Tactics</h2>
+      ${goalsSection || '<p style="color: #6b7280;">No goals defined for this cycle.</p>'}
+      
+      <h2>Performance Blocks</h2>
+      ${blocksSection}
+      
+      <div class="footer">
+        Generated by 12 Week Year Workbook • ${new Date().toLocaleDateString()}
+      </div>
+    </body>
+    </html>
+  `;
+}
+
 export function generateCycleReviewHTML(data: CycleReviewData): string {
   const avgScore = parseFloat(data.averageExecutionScore || '0');
   const reviewTitle = data.reviewType === 'mid_cycle' ? 'Mid-Cycle Review (Week 6)' : 'Final Cycle Review';

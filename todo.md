@@ -143,3 +143,10 @@
 - [x] Implement auto-save on Settings page (reminder preferences)
 - [x] Add visual feedback indicators to all auto-save pages
 - [x] Handle offline/error states gracefully with retry option
+
+## Fix Export and Add PDF Export (Phase 17)
+- [x] Fixed "Failed to export cycle data" error - tRPC input format was incorrect
+- [x] Fixed all export buttons to use { json: { ... } } format
+- [x] Replaced JSON export with PDF export in Settings
+- [x] Created printable cycle summary with goals, tactics, scores, and reviews
+- [x] Export PDF now works on Scorecard, Cycle Review, and Settings pages

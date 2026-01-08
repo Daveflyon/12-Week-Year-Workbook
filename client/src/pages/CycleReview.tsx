@@ -51,9 +51,10 @@ export default function CycleReview() {
   const handleExportPDF = async () => {
     if (!activeCycle) return;
     try {
-      const response = await fetch(`/api/trpc/export.cycleReview?input=${encodeURIComponent(JSON.stringify({ cycleId: activeCycle.id, reviewType }))}`);
+      const input = JSON.stringify({ json: { cycleId: activeCycle.id, reviewType } });
+      const response = await fetch(`/api/trpc/export.cycleReview?input=${encodeURIComponent(input)}`);
       const data = await response.json();
-      const html = data.result?.data?.html;
+      const html = data.result?.data?.json?.html || data.result?.data?.html;
       if (html) {
         const printWindow = window.open('', '_blank');
         if (printWindow) {
@@ -61,8 +62,11 @@ export default function CycleReview() {
           printWindow.document.close();
           printWindow.print();
         }
+      } else {
+        toast.error("Failed to generate PDF - no content returned");
       }
     } catch (error) {
+      console.error('Export error:', error);
       toast.error("Failed to export review");
     }
   };

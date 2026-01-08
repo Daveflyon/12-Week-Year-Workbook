@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, protectedProcedure, router } from "./_core/trpc";
 import { notifyOwner } from "./_core/notification";
-import { generateScorecardHTML, generateCycleReviewHTML } from "./pdfExport";
+import { generateScorecardHTML, generateCycleReviewHTML, generateFullCycleSummaryHTML } from "./pdfExport";
 import { z } from "zod";
 import * as db from "./db";
 
@@ -669,8 +669,8 @@ export const appRouter = router({
         return { html };
       }),
     
-    // Full cycle data export as JSON
-    cycleData: protectedProcedure
+    // Full cycle summary as printable HTML/PDF
+    fullCycleSummary: protectedProcedure
       .input(z.object({ cycleId: z.number() }))
       .query(async ({ ctx, input }) => {
         const cycle = await db.getCycleById(input.cycleId, ctx.user.id);
@@ -679,35 +679,61 @@ export const appRouter = router({
         const vision = await db.getVisionByCycle(input.cycleId, ctx.user.id);
         const goals = await db.getGoalsByCycle(input.cycleId, ctx.user.id);
         const performanceBlocks = await db.getPerformanceBlocksByCycle(input.cycleId, ctx.user.id);
-        const checklistItems = await db.getChecklistByCycle(input.cycleId, ctx.user.id);
         const weeklyScores = await db.getWeeklyScoresByCycle(input.cycleId, ctx.user.id);
-        const weeklyReviews = await db.getWeeklyReviewsByCycle(input.cycleId, ctx.user.id);
-        const cycleReview = await db.getCycleReview(input.cycleId, ctx.user.id, "final");
         
-        // Get tactics and entries for each goal
+        // Calculate current week
+        const startDate = new Date(cycle.startDate);
+        const now = new Date();
+        const diffTime = now.getTime() - startDate.getTime();
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+        const currentWeek = Math.min(12, Math.max(1, Math.floor(diffDays / 7) + 1));
+        
+        // Calculate average score
+        const scores = weeklyScores.map(s => parseFloat(s.executionScore || '0'));
+        const averageScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;
+        
+        // Get tactics for each goal
         const goalsWithTactics = await Promise.all(goals.map(async (goal) => {
           const tactics = await db.getTacticsByGoal(goal.id, ctx.user.id);
-          const tacticsWithEntries = await Promise.all(tactics.map(async (tactic) => {
-            const entries = await db.getTacticEntriesByTactic(tactic.id, ctx.user.id);
-            return { ...tactic, entries };
-          }));
-          return { ...goal, tactics: tacticsWithEntries };
+          return {
+            title: goal.title,
+            lagIndicator: goal.lagIndicator || '',
+            lagTarget: goal.lagTarget || '',
+            lagCurrentValue: goal.lagCurrentValue || '',
+            tactics: tactics.map(t => ({
+              title: t.title,
+              weeklyTarget: t.weeklyTarget ?? 7,
+            })),
+          };
         }));
         
-        return {
-          exportDate: new Date().toISOString(),
-          exportVersion: "1.0",
-          cycle: {
-            ...cycle,
-            vision,
-            goals: goalsWithTactics,
-            performanceBlocks,
-            checklistItems,
-            weeklyScores,
-            weeklyReviews,
-            cycleReview,
-          },
-        };
+        const html = generateFullCycleSummaryHTML({
+          cycleTitle: cycle.title,
+          startDate: cycle.startDate,
+          endDate: cycle.endDate,
+          currentWeek,
+          vision: vision ? {
+            longTermVision: vision.longTermVision || '',
+            threeYearVision: '',
+            oneYearGoals: '',
+            twelveWeekGoals: vision.commitmentStatement || '',
+          } : null,
+          goals: goalsWithTactics,
+          weeklyScores: weeklyScores.map(s => ({
+            weekNumber: s.weekNumber,
+            score: parseFloat(s.executionScore || '0'),
+          })),
+          averageScore,
+          performanceBlocks: performanceBlocks.map(b => ({
+            blockType: b.blockType,
+            dayOfWeek: b.dayOfWeek,
+            startTime: b.startTime,
+            endTime: b.endTime,
+            description: b.description || '',
+          })),
+        });
+        
+        return { html };
       }),
   }),
 

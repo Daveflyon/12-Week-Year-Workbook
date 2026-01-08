@@ -244,9 +244,10 @@ export default function Scorecard() {
   const handleExportPDF = async () => {
     if (!activeCycle) return;
     try {
-      const response = await fetch(`/api/trpc/export.weeklyScorecard?input=${encodeURIComponent(JSON.stringify({ cycleId: activeCycle.id, weekNumber: selectedWeek }))}`);
+      const input = JSON.stringify({ json: { cycleId: activeCycle.id, weekNumber: selectedWeek } });
+      const response = await fetch(`/api/trpc/export.weeklyScorecard?input=${encodeURIComponent(input)}`);
       const data = await response.json();
-      const html = data.result?.data?.html;
+      const html = data.result?.data?.json?.html || data.result?.data?.html;
       if (html) {
         const printWindow = window.open('', '_blank');
         if (printWindow) {
@@ -254,8 +255,11 @@ export default function Scorecard() {
           printWindow.document.close();
           printWindow.print();
         }
+      } else {
+        toast.error("Failed to generate PDF - no content returned");
       }
     } catch (error) {
+      console.error('Export error:', error);
       toast.error("Failed to export scorecard");
     }
   };

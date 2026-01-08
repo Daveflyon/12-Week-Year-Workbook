@@ -76,30 +76,37 @@ export default function Settings() {
     }
   };
 
-  const handleExportJSON = async () => {
+  const handleExportPDF = async () => {
     if (!activeCycle) {
       toast.error("No active cycle to export");
       return;
     }
-    setExportFormat('json');
+    setExportFormat('pdf');
     try {
-      const response = await fetch(`/api/trpc/export.cycleData?input=${encodeURIComponent(JSON.stringify({ cycleId: activeCycle.id }))}`);
+      const input = JSON.stringify({ json: { cycleId: activeCycle.id } });
+      const response = await fetch(`/api/trpc/export.fullCycleSummary?input=${encodeURIComponent(input)}`);
       const result = await response.json();
-      if (result.result?.data) {
-        const blob = new Blob([JSON.stringify(result.result.data, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${activeCycle.title.replace(/[^a-z0-9]/gi, '_')}_export.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        toast.success("Cycle data exported successfully!");
+      const html = result.result?.data?.json?.html || result.result?.data?.html;
+      if (html) {
+        // Open HTML in new window for printing
+        const printWindow = window.open('', '_blank');
+        if (printWindow) {
+          printWindow.document.write(html);
+          printWindow.document.close();
+          // Wait for content to load then trigger print
+          printWindow.onload = () => {
+            printWindow.print();
+          };
+          toast.success("PDF export ready! Use the print dialog to save as PDF.");
+        } else {
+          toast.error("Please allow popups to export PDF");
+        }
       } else {
-        throw new Error("Export failed");
+        console.error('Export result:', result);
+        throw new Error("Export failed - no HTML content");
       }
     } catch (error) {
+      console.error('Export error:', error);
       toast.error("Failed to export cycle data");
     } finally {
       setExportFormat(null);
@@ -400,20 +407,20 @@ export default function Settings() {
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30">
               <div className="flex items-center gap-3">
-                <FileJson className="h-8 w-8 text-blue-500" />
+                <FileText className="h-8 w-8 text-emerald-500" />
                 <div>
-                  <p className="font-medium">Export as JSON</p>
+                  <p className="font-medium">Export as PDF</p>
                   <p className="text-sm text-muted-foreground">
-                    Full data backup including all goals, tactics, scores, and reviews
+                    Printable summary with goals, tactics, scores, and progress charts
                   </p>
                 </div>
               </div>
               <Button
                 variant="outline"
-                onClick={handleExportJSON}
-                disabled={exportFormat === 'json' || !activeCycle}
+                onClick={handleExportPDF}
+                disabled={exportFormat === 'pdf' || !activeCycle}
               >
-                {exportFormat === 'json' ? "Exporting..." : "Export"}
+                {exportFormat === 'pdf' ? "Exporting..." : "Export"}
               </Button>
             </div>
             {!activeCycle && (
