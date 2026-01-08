@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, createContext, useContext, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { X, ChevronRight, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -36,24 +36,95 @@ function markTourComplete(pageKey: string) {
   }
 }
 
+function isTourCompleted(pageKey: string): boolean {
+  return getCompletedTours().includes(pageKey);
+}
+
+// Context to allow triggering tours from outside
+interface TourContextType {
+  triggerTour: (pageKey: string) => void;
+  registerTour: (pageKey: string, trigger: () => void) => void;
+  unregisterTour: (pageKey: string) => void;
+}
+
+const TourContext = createContext<TourContextType | null>(null);
+
+export function TourProvider({ children }: { children: React.ReactNode }) {
+  const tourTriggersRef = useRef<Record<string, () => void>>({});
+
+  const registerTour = useCallback((pageKey: string, trigger: () => void) => {
+    tourTriggersRef.current[pageKey] = trigger;
+  }, []);
+
+  const unregisterTour = useCallback((pageKey: string) => {
+    delete tourTriggersRef.current[pageKey];
+  }, []);
+
+  const triggerTour = useCallback((pageKey: string) => {
+    const trigger = tourTriggersRef.current[pageKey];
+    if (trigger) {
+      trigger();
+    }
+  }, []);
+
+  return (
+    <TourContext.Provider value={{ triggerTour, registerTour, unregisterTour }}>
+      {children}
+    </TourContext.Provider>
+  );
+}
+
+export function useTourTrigger() {
+  const context = useContext(TourContext);
+  if (!context) {
+    // Return a no-op if not wrapped in provider
+    return { triggerTour: () => {} };
+  }
+  return { triggerTour: context.triggerTour };
+}
+
 export function useTooltipTour(pageKey: string) {
   const [shouldShow, setShouldShow] = useState(false);
+  const context = useContext(TourContext);
+  const registeredRef = useRef(false);
 
+  // Auto-show only on first visit
   useEffect(() => {
-    // Small delay to ensure page has rendered
     const timer = setTimeout(() => {
-      const completed = getCompletedTours();
-      setShouldShow(!completed.includes(pageKey));
+      const completed = isTourCompleted(pageKey);
+      if (!completed) {
+        setShouldShow(true);
+      }
     }, 500);
     return () => clearTimeout(timer);
   }, [pageKey]);
+
+  // Register this tour with the context for manual triggering - only once
+  useEffect(() => {
+    if (context && !registeredRef.current) {
+      registeredRef.current = true;
+      context.registerTour(pageKey, () => {
+        setShouldShow(true);
+      });
+    }
+    return () => {
+      if (context && registeredRef.current) {
+        context.unregisterTour(pageKey);
+        registeredRef.current = false;
+      }
+    };
+  }, [pageKey, context]);
 
   const completeTour = useCallback(() => {
     markTourComplete(pageKey);
     setShouldShow(false);
   }, [pageKey]);
 
-  return { shouldShow, completeTour };
+  const startTour = useCallback(() => {
+    setShouldShow(true);
+  }, []);
+
+  return { shouldShow, completeTour, startTour };
 }
 
 export default function TooltipTour({ pageKey, steps, onComplete }: TooltipTourProps) {
@@ -65,6 +136,14 @@ export default function TooltipTour({ pageKey, steps, onComplete }: TooltipTourP
   const step = steps[currentStep];
   const isLastStep = currentStep === steps.length - 1;
   const isFirstStep = currentStep === 0;
+
+  // Reset step when tour starts
+  useEffect(() => {
+    if (shouldShow) {
+      setCurrentStep(0);
+      setIsVisible(true);
+    }
+  }, [shouldShow]);
 
   const updatePosition = useCallback(() => {
     if (!step) return;
@@ -187,19 +266,19 @@ export default function TooltipTour({ pageKey, steps, onComplete }: TooltipTourP
         {/* Close button */}
         <button
           onClick={handleSkip}
-          className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colours"
+          className="absolute -top-2 -right-2 h-6 w-6 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors"
         >
           <X className="h-3 w-3" />
         </button>
 
         <div className="p-4">
           {/* Step indicator */}
-          <div className="flex items-centre gap-1 mb-3">
+          <div className="flex items-center gap-1 mb-3">
             {steps.map((_, index) => (
               <div
                 key={index}
                 className={cn(
-                  "h-1 flex-1 rounded-full transition-colours",
+                  "h-1 flex-1 rounded-full transition-colors",
                   index <= currentStep ? "bg-primary" : "bg-muted"
                 )}
               />
@@ -213,7 +292,7 @@ export default function TooltipTour({ pageKey, steps, onComplete }: TooltipTourP
           </p>
 
           {/* Navigation */}
-          <div className="flex items-centre justify-between">
+          <div className="flex items-center justify-between">
             <Button
               variant="ghost"
               size="sm"
@@ -223,7 +302,7 @@ export default function TooltipTour({ pageKey, steps, onComplete }: TooltipTourP
               Skip tour
             </Button>
 
-            <div className="flex items-centre gap-2">
+            <div className="flex items-center gap-2">
               {!isFirstStep && (
                 <Button variant="ghost" size="sm" onClick={handlePrev}>
                   <ChevronLeft className="h-4 w-4 mr-1" />

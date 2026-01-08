@@ -25,7 +25,9 @@ import {
   Users,
   Settings,
   Quote,
+  PlayCircle,
 } from "lucide-react";
+import { useTourTrigger } from "./TooltipTour";
 
 interface HelpDialogProps {
   currentPage?: string;
@@ -268,8 +270,19 @@ This weekly rhythm keeps you focused and accountable.`,
 export default function HelpDialog({ currentPage, showIntro }: HelpDialogProps) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(currentPage || "intro");
+  const { triggerTour } = useTourTrigger();
 
   const currentHelp = currentPage ? PAGE_HELP[currentPage as keyof typeof PAGE_HELP] : null;
+
+  const handleStartTour = () => {
+    if (currentPage) {
+      setOpen(false);
+      // Small delay to let dialog close before starting tour
+      setTimeout(() => {
+        triggerTour(currentPage);
+      }, 200);
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -293,7 +306,7 @@ export default function HelpDialog({ currentPage, showIntro }: HelpDialogProps) 
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
           <TabsList className="grid w-full grid-cols-2 shrink-0">
-            <TabsTrigger value="intro">12 Week Year Intro</TabsTrigger>
+            <TabsTrigger value="intro">Getting Started</TabsTrigger>
             <TabsTrigger value="page">
               {currentHelp ? currentHelp.title : "Page Help"}
             </TabsTrigger>
@@ -350,6 +363,16 @@ export default function HelpDialog({ currentPage, showIntro }: HelpDialogProps) 
                       <p className="text-sm text-muted-foreground">How to use this page</p>
                     </div>
                   </div>
+
+                  {/* Start Interactive Tour Button */}
+                  <Button
+                    onClick={handleStartTour}
+                    variant="outline"
+                    className="w-full border-primary/30 hover:bg-primary/10"
+                  >
+                    <PlayCircle className="h-4 w-4 mr-2 text-primary" />
+                    Start Interactive Tour
+                  </Button>
 
                   <div className="prose prose-sm prose-invert max-w-none">
                     <p className="text-foreground/80 whitespace-pre-line leading-relaxed">

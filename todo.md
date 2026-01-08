@@ -82,3 +82,10 @@
 - [x] Position blocks according to their actual start/end times
 - [x] Make block height proportional to duration
 - [x] Keep edit/delete functionality on blocks
+
+## Smart Tooltip Tours (Phase 9)
+- [x] Show help hints automatically only on first visit to each section
+- [x] Store visited sections in localStorage to track first-visit state
+- [x] Make tours optional after first visit - accessible via help button
+- [x] Add "Start Interactive Tour" button in Help dialog for each page
+- [x] TourProvider context for triggering tours from anywhere
