@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE cycles SET title = '12-Week Cycle - Jan 2026' WHERE id = 60011 AND userId = 1",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user iNhAe1dL1wzAkH4.root --database 7YT5AjFkoqfS5QKmXhFci2 --execute UPDATE cycles SET title = '12-Week Cycle - Jan 2026' WHERE id = 60011 AND userId = 1",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1574
+}

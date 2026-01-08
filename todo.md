@@ -98,3 +98,10 @@
 - [x] Cycles with actual data now show first in the dropdown
 - [x] Users can switch between cycles using the selector
 - [x] Robert Beecham's cycle with goal "Achieve £20,000 Monthly Revenue" now accessible
+
+## Bug Fix - David Cannot See Entries (Phase 11)
+- [x] Investigated - David's real data was in cycle 60011 named "Stats Test Cycle"
+- [x] Renamed cycle 60011 to "12-Week Cycle - Jan 2026"
+- [x] Deleted 42 test cycles from David's account
+- [x] David now has 1 cycle with goal "Achieve £20,000 Monthly Revenue" and 6 tactics
+- [x] Data visibility restored successfully
