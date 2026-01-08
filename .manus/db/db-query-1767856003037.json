@@ -1,0 +1,38 @@
+{
+  "query": "SELECT c.id, c.title, c.userId, u.name as userName, u.openId FROM cycles c LEFT JOIN users u ON c.userId = u.id WHERE c.userId != 1 ORDER BY c.id DESC LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user iNhAe1dL1wzAkH4.root --database 7YT5AjFkoqfS5QKmXhFci2 --execute SELECT c.id, c.title, c.userId, u.name as userName, u.openId FROM cycles c LEFT JOIN users u ON c.userId = u.id WHERE c.userId != 1 ORDER BY c.id DESC LIMIT 20;",
+  "rows": [
+    {
+      "id": "150001",
+      "title": "12-Week Cycle - Jan 2026",
+      "userId": "60011",
+      "userName": "robert beecham",
+      "openId": "jahDkD4Lg28bZTAtKmHMGs"
+    },
+    {
+      "id": "120001",
+      "title": "12-Week Cycle - Jan 2026",
+      "userId": "300001",
+      "userName": "Heiner Ahler",
+      "openId": "EVzX9oyHqAc6HpoLnxTXdJ"
+    },
+    {
+      "id": "90001",
+      "title": "12-Week Cycle - Jan 2026",
+      "userId": "420001",
+      "userName": "V S",
+      "openId": "mP7sLGANMbYjXwTCTgbvSM"
+    },
+    {
+      "id": "60001",
+      "title": "12-Week Cycle - Jan 2026",
+      "userId": "60011",
+      "userName": "robert beecham",
+      "openId": "jahDkD4Lg28bZTAtKmHMGs"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tuserId\tuserName\topenId\n150001\t12-Week Cycle - Jan 2026\t60011\trobert beecham\tjahDkD4Lg28bZTAtKmHMGs\n120001\t12-Week Cycle - Jan 2026\t300001\tHeiner Ahler\tEVzX9oyHqAc6HpoLnxTXdJ\n90001\t12-Week Cycle - Jan 2026\t420001\tV S\tmP7sLGANMbYjXwTCTgbvSM\n60001\t12-Week Cycle - Jan 2026\t60011\trobert beecham\tjahDkD4Lg28bZTAtKmHMGs\n",
+  "stderr": "",
+  "execution_time_ms": 1542
+}

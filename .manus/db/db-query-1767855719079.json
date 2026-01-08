@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, openId, name, email FROM users ORDER BY id DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user iNhAe1dL1wzAkH4.root --database 7YT5AjFkoqfS5QKmXhFci2 --execute SELECT id, openId, name, email FROM users ORDER BY id DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "420001",
+      "openId": "mP7sLGANMbYjXwTCTgbvSM",
+      "name": "V S",
+      "email": "queenvictoria.vs@gmail.com"
+    },
+    {
+      "id": "300001",
+      "openId": "EVzX9oyHqAc6HpoLnxTXdJ",
+      "name": "Heiner Ahler",
+      "email": "heiner.ahler1@gmail.com"
+    },
+    {
+      "id": "210001",
+      "openId": "n3u6N3Qa9g6S2GFJCWLebn",
+      "name": "Dave Branson",
+      "email": "davethebranson@gmail.com"
+    },
+    {
+      "id": "60011",
+      "openId": "jahDkD4Lg28bZTAtKmHMGs",
+      "name": "robert beecham",
+      "email": "robert.beecham@googlemail.com"
+    },
+    {
+      "id": "1",
+      "openId": "cPq6PEAJxdYWtXDwZfwbfR",
+      "name": "David Agyei",
+      "email": "david.agyei@gmail.com"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\topenId\tname\temail\n420001\tmP7sLGANMbYjXwTCTgbvSM\tV S\tqueenvictoria.vs@gmail.com\n300001\tEVzX9oyHqAc6HpoLnxTXdJ\tHeiner Ahler\theiner.ahler1@gmail.com\n210001\tn3u6N3Qa9g6S2GFJCWLebn\tDave Branson\tdavethebranson@gmail.com\n60011\tjahDkD4Lg28bZTAtKmHMGs\trobert beecham\trobert.beecham@googlemail.com\n1\tcPq6PEAJxdYWtXDwZfwbfR\tDavid Agyei\tdavid.agyei@gmail.com\n",
+  "stderr": "",
+  "execution_time_ms": 1568
+}

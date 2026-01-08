@@ -1,0 +1,115 @@
+{
+  "query": "SELECT c.id, c.title, c.userId, c.status, u.name as userName FROM cycles c LEFT JOIN users u ON c.userId = u.id ORDER BY c.id DESC LIMIT 15;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user iNhAe1dL1wzAkH4.root --database 7YT5AjFkoqfS5QKmXhFci2 --execute SELECT c.id, c.title, c.userId, c.status, u.name as userName FROM cycles c LEFT JOIN users u ON c.userId = u.id ORDER BY c.id DESC LIMIT 15;",
+  "rows": [
+    {
+      "id": "210048",
+      "title": "Stats Test Cycle",
+      "userId": "1",
+      "status": "planning",
+      "userName": "David Agyei"
+    },
+    {
+      "id": "210047",
+      "title": "Tactic Test Cycle",
+      "userId": "1",
+      "status": "planning",
+      "userName": "David Agyei"
+    },
+    {
+      "id": "210046",
+      "title": "Checklist Bulk Test Cycle",
+      "userId": "1",
+      "status": "planning",
+      "userName": "David Agyei"
+    },
+    {
+      "id": "210045",
+      "title": "Goal Creation Test Cycle",
+      "userId": "1",
+      "status": "planning",
+      "userName": "David Agyei"
+    },
+    {
+      "id": "210044",
+      "title": "Bulk Update Test Cycle",
+      "userId": "1",
+      "status": "planning",
+      "userName": "David Agyei"
+    },
+    {
+      "id": "210043",
+      "title": "Goal Test Cycle",
+      "userId": "1",
+      "status": "planning",
+      "userName": "David Agyei"
+    },
+    {
+      "id": "210042",
+      "title": "Test Cycle",
+      "userId": "1",
+      "status": "planning",
+      "userName": "David Agyei"
+    },
+    {
+      "id": "210041",
+      "title": "Bulk Test Cycle",
+      "userId": "1",
+      "status": "planning",
+      "userName": "David Agyei"
+    },
+    {
+      "id": "210040",
+      "title": "Stats Test Cycle",
+      "userId": "1",
+      "status": "planning",
+      "userName": "David Agyei"
+    },
+    {
+      "id": "210039",
+      "title": "Tactic Test Cycle",
+      "userId": "1",
+      "status": "planning",
+      "userName": "David Agyei"
+    },
+    {
+      "id": "210038",
+      "title": "Checklist Bulk Test Cycle",
+      "userId": "1",
+      "status": "planning",
+      "userName": "David Agyei"
+    },
+    {
+      "id": "210037",
+      "title": "Goal Creation Test Cycle",
+      "userId": "1",
+      "status": "planning",
+      "userName": "David Agyei"
+    },
+    {
+      "id": "210036",
+      "title": "Bulk Update Test Cycle",
+      "userId": "1",
+      "status": "planning",
+      "userName": "David Agyei"
+    },
+    {
+      "id": "210035",
+      "title": "Goal Test Cycle",
+      "userId": "1",
+      "status": "planning",
+      "userName": "David Agyei"
+    },
+    {
+      "id": "210034",
+      "title": "Test Cycle",
+      "userId": "1",
+      "status": "planning",
+      "userName": "David Agyei"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\ttitle\tuserId\tstatus\tuserName\n210048\tStats Test Cycle\t1\tplanning\tDavid Agyei\n210047\tTactic Test Cycle\t1\tplanning\tDavid Agyei\n210046\tChecklist Bulk Test Cycle\t1\tplanning\tDavid Agyei\n210045\tGoal Creation Test Cycle\t1\tplanning\tDavid Agyei\n210044\tBulk Update Test Cycle\t1\tplanning\tDavid Agyei\n210043\tGoal Test Cycle\t1\tplanning\tDavid Agyei\n210042\tTest Cycle\t1\tplanning\tDavid Agyei\n210041\tBulk Test Cycle\t1\tplanning\tDavid Agyei\n210040\tStats Test Cycle\t1\tplanning\tDavid Agyei\n210039\tTactic Test Cycle\t1\tplanning\tDavid Agyei\n210038\tChecklist Bulk Test Cycle\t1\tplanning\tDavid Agyei\n210037\tGoal Creation Test Cycle\t1\tplanning\tDavid Agyei\n210036\tBulk Update Test Cycle\t1\tplanning\tDavid Agyei\n210035\tGoal Test Cycle\t1\tplanning\tDavid Agyei\n210034\tTest Cycle\t1\tplanning\tDavid Agyei\n",
+  "stderr": "",
+  "execution_time_ms": 1534
+}

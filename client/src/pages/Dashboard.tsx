@@ -2,6 +2,7 @@ import AppLayout from "@/components/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { trpc } from "@/lib/trpc";
 import { 
   Target, 
@@ -13,7 +14,8 @@ import {
   ArrowRight,
   Sparkles,
   Users,
-  Quote
+  Quote,
+  ChevronDown
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { useState, useEffect } from "react";
@@ -160,6 +162,8 @@ function CreateCyclePrompt() {
 
 const ONBOARDING_KEY = '12wy_onboarding_complete';
 
+const SELECTED_CYCLE_KEY = '12wy_selected_cycle';
+
 export default function Dashboard() {
   const [, setLocation] = useLocation();
   const [showOnboarding, setShowOnboarding] = useState(() => {
@@ -167,6 +171,13 @@ export default function Dashboard() {
       return !localStorage.getItem(ONBOARDING_KEY);
     }
     return false;
+  });
+  const [selectedCycleId, setSelectedCycleId] = useState<number | null>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem(SELECTED_CYCLE_KEY);
+      return saved ? parseInt(saved, 10) : null;
+    }
+    return null;
   });
   
   const handleOnboardingComplete = () => {
@@ -180,7 +191,17 @@ export default function Dashboard() {
   
   const { data: cycles, isLoading: cyclesLoading } = trpc.cycle.list.useQuery();
   
-  const activeCycle = cycles?.find(c => c.status === 'active') || cycles?.[0];
+  // Find the selected cycle, or fall back to active cycle, or first cycle
+  const activeCycle = cycles?.find(c => c.id === selectedCycleId) 
+    || cycles?.find(c => c.status === 'active') 
+    || cycles?.[0];
+  
+  // Update localStorage when cycle changes
+  const handleCycleChange = (cycleId: string) => {
+    const id = parseInt(cycleId, 10);
+    setSelectedCycleId(id);
+    localStorage.setItem(SELECTED_CYCLE_KEY, cycleId);
+  };
   
   const { data: stats, isLoading: statsLoading } = trpc.stats.getDashboard.useQuery(
     { cycleId: activeCycle?.id ?? 0 },
@@ -256,9 +277,25 @@ export default function Dashboard() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold">Dashboard</h1>
-            <p className="text-muted-foreground">
-              {activeCycle?.title} • Week {currentWeek} of 12
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <Select 
+                value={activeCycle?.id?.toString() ?? ''} 
+                onValueChange={handleCycleChange}
+              >
+                <SelectTrigger className="w-auto min-w-[200px] h-8 text-sm bg-background border-border">
+                  <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+                  <SelectValue placeholder="Select cycle" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cycles?.map((cycle) => (
+                    <SelectItem key={cycle.id} value={cycle.id.toString()}>
+                      {cycle.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <span className="text-muted-foreground text-sm">• Week {currentWeek} of 12</span>
+            </div>
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setLocation("/scorecard")}>

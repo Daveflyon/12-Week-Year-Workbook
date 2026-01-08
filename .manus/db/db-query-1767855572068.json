@@ -1,0 +1,110 @@
+{
+  "query": "SELECT * FROM cycles LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user iNhAe1dL1wzAkH4.root --database 7YT5AjFkoqfS5QKmXhFci2 --execute SELECT * FROM cycles LIMIT 10;",
+  "rows": [
+    {
+      "id": "1",
+      "userId": "1",
+      "title": "Test Cycle",
+      "startDate": "2026-01-02 12:00:08",
+      "endDate": "2026-03-27 11:00:08",
+      "status": "planning",
+      "createdAt": "2026-01-02 12:00:07",
+      "updatedAt": "2026-01-02 12:00:07"
+    },
+    {
+      "id": "2",
+      "userId": "1",
+      "title": "Goal Test Cycle",
+      "startDate": "2026-01-02 12:00:12",
+      "endDate": "2026-03-27 11:00:12",
+      "status": "planning",
+      "createdAt": "2026-01-02 12:00:11",
+      "updatedAt": "2026-01-02 12:00:11"
+    },
+    {
+      "id": "3",
+      "userId": "1",
+      "title": "Goal Creation Test Cycle",
+      "startDate": "2026-01-02 12:00:16",
+      "endDate": "2026-03-27 11:00:16",
+      "status": "planning",
+      "createdAt": "2026-01-02 12:00:15",
+      "updatedAt": "2026-01-02 12:00:15"
+    },
+    {
+      "id": "4",
+      "userId": "1",
+      "title": "Tactic Test Cycle",
+      "startDate": "2026-01-02 12:00:20",
+      "endDate": "2026-03-27 11:00:20",
+      "status": "planning",
+      "createdAt": "2026-01-02 12:00:20",
+      "updatedAt": "2026-01-02 12:00:20"
+    },
+    {
+      "id": "5",
+      "userId": "1",
+      "title": "Stats Test Cycle",
+      "startDate": "2026-01-02 12:00:25",
+      "endDate": "2026-03-27 11:00:25",
+      "status": "planning",
+      "createdAt": "2026-01-02 12:00:25",
+      "updatedAt": "2026-01-02 12:00:25"
+    },
+    {
+      "id": "6",
+      "userId": "1",
+      "title": "Test Cycle",
+      "startDate": "2026-01-02 12:01:52",
+      "endDate": "2026-03-27 11:01:52",
+      "status": "planning",
+      "createdAt": "2026-01-02 12:01:52",
+      "updatedAt": "2026-01-02 12:01:52"
+    },
+    {
+      "id": "7",
+      "userId": "1",
+      "title": "Goal Test Cycle",
+      "startDate": "2026-01-02 12:01:56",
+      "endDate": "2026-03-27 11:01:56",
+      "status": "planning",
+      "createdAt": "2026-01-02 12:01:56",
+      "updatedAt": "2026-01-02 12:01:56"
+    },
+    {
+      "id": "8",
+      "userId": "1",
+      "title": "Goal Creation Test Cycle",
+      "startDate": "2026-01-02 12:02:00",
+      "endDate": "2026-03-27 11:02:00",
+      "status": "planning",
+      "createdAt": "2026-01-02 12:02:00",
+      "updatedAt": "2026-01-02 12:02:00"
+    },
+    {
+      "id": "9",
+      "userId": "1",
+      "title": "Tactic Test Cycle",
+      "startDate": "2026-01-02 12:02:05",
+      "endDate": "2026-03-27 11:02:05",
+      "status": "planning",
+      "createdAt": "2026-01-02 12:02:05",
+      "updatedAt": "2026-01-02 12:02:05"
+    },
+    {
+      "id": "10",
+      "userId": "1",
+      "title": "Stats Test Cycle",
+      "startDate": "2026-01-02 12:02:10",
+      "endDate": "2026-03-27 11:02:10",
+      "status": "planning",
+      "createdAt": "2026-01-02 12:02:09",
+      "updatedAt": "2026-01-02 12:02:09"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tuserId\ttitle\tstartDate\tendDate\tstatus\tcreatedAt\tupdatedAt\n1\t1\tTest Cycle\t2026-01-02 12:00:08\t2026-03-27 11:00:08\tplanning\t2026-01-02 12:00:07\t2026-01-02 12:00:07\n2\t1\tGoal Test Cycle\t2026-01-02 12:00:12\t2026-03-27 11:00:12\tplanning\t2026-01-02 12:00:11\t2026-01-02 12:00:11\n3\t1\tGoal Creation Test Cycle\t2026-01-02 12:00:16\t2026-03-27 11:00:16\tplanning\t2026-01-02 12:00:15\t2026-01-02 12:00:15\n4\t1\tTactic Test Cycle\t2026-01-02 12:00:20\t2026-03-27 11:00:20\tplanning\t2026-01-02 12:00:20\t2026-01-02 12:00:20\n5\t1\tStats Test Cycle\t2026-01-02 12:00:25\t2026-03-27 11:00:25\tplanning\t2026-01-02 12:00:25\t2026-01-02 12:00:25\n6\t1\tTest Cycle\t2026-01-02 12:01:52\t2026-03-27 11:01:52\tplanning\t2026-01-02 12:01:52\t2026-01-02 12:01:52\n7\t1\tGoal Test Cycle\t2026-01-02 12:01:56\t2026-03-27 11:01:56\tplanning\t2026-01-02 12:01:56\t2026-01-02 12:01:56\n8\t1\tGoal Creation Test Cycle\t2026-01-02 12:02:00\t2026-03-27 11:02:00\tplanning\t2026-01-02 12:02:00\t2026-01-02 12:02:00\n9\t1\tTactic Test Cycle\t2026-01-02 12:02:05\t2026-03-27 11:02:05\tplanning\t2026-01-02 12:02:05\t2026-01-02 12:02:05\n10\t1\tStats Test Cycle\t2026-01-02 12:02:10\t2026-03-27 11:02:10\tplanning\t2026-01-02 12:02:09\t2026-01-02 12:02:09\n",
+  "stderr": "",
+  "execution_time_ms": 1563
+}

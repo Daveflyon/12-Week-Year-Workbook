@@ -89,3 +89,12 @@
 - [x] Make tours optional after first visit - accessible via help button
 - [x] Add "Start Interactive Tour" button in Help dialog for each page
 - [x] TourProvider context for triggering tours from anywhere
+
+## Bug Fix - Existing Users Cannot See Entries (Phase 10)
+- [x] Investigated - data was in database, issue was cycle ordering
+- [x] Added cycle selector dropdown to Dashboard header
+- [x] Modified getCyclesByUser to prioritize cycles with goals first
+- [x] Deleted 56 empty test cycles from database
+- [x] Cycles with actual data now show first in the dropdown
+- [x] Users can switch between cycles using the selector
+- [x] Robert Beecham's cycle with goal "Achieve £20,000 Monthly Revenue" now accessible

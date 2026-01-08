@@ -1,0 +1,58 @@
+{
+  "query": "SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE();",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway03.us-east-1.prod.aws.tidbcloud.com --port 4000 --user iNhAe1dL1wzAkH4.root --database 7YT5AjFkoqfS5QKmXhFci2 --execute SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE();",
+  "rows": [
+    {
+      "table_name": "__drizzle_migrations"
+    },
+    {
+      "table_name": "users"
+    },
+    {
+      "table_name": "checklistItems"
+    },
+    {
+      "table_name": "cycleReviews"
+    },
+    {
+      "table_name": "cycles"
+    },
+    {
+      "table_name": "flashcardViews"
+    },
+    {
+      "table_name": "goals"
+    },
+    {
+      "table_name": "performanceBlocks"
+    },
+    {
+      "table_name": "reminderSettings"
+    },
+    {
+      "table_name": "tacticEntries"
+    },
+    {
+      "table_name": "tactics"
+    },
+    {
+      "table_name": "visions"
+    },
+    {
+      "table_name": "weeklyReviews"
+    },
+    {
+      "table_name": "weeklyScores"
+    },
+    {
+      "table_name": "accountabilityPartners"
+    },
+    {
+      "table_name": "wamRecords"
+    }
+  ],
+  "messages": [],
+  "stdout": "table_name\n__drizzle_migrations\nusers\nchecklistItems\ncycleReviews\ncycles\nflashcardViews\ngoals\nperformanceBlocks\nreminderSettings\ntacticEntries\ntactics\nvisions\nweeklyReviews\nweeklyScores\naccountabilityPartners\nwamRecords\n",
+  "stderr": "",
+  "execution_time_ms": 1547
+}

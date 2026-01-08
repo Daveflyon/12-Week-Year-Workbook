@@ -1,4 +1,4 @@
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, gte, lte, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { 
   InsertUser, users, 
@@ -100,7 +100,27 @@ export async function createCycle(cycle: InsertCycle): Promise<Cycle> {
 export async function getCyclesByUser(userId: number): Promise<Cycle[]> {
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(cycles).where(eq(cycles.userId, userId)).orderBy(desc(cycles.createdAt));
+  // Order by: cycles with goals first, then by creation date (newest first)
+  const result = await db.execute(sql`
+    SELECT c.*, 
+           (SELECT COUNT(*) FROM goals WHERE cycleId = c.id) as goalCount
+    FROM cycles c
+    WHERE c.userId = ${userId}
+    ORDER BY goalCount DESC, c.createdAt DESC
+  `) as unknown as [any[], any];
+  // mysql2 returns [rows, fields], so result[0] contains the rows
+  const rows = result[0];
+  // Map the raw result to Cycle type
+  return rows.map((row: any) => ({
+    id: row.id,
+    userId: row.userId,
+    title: row.title,
+    startDate: row.startDate,
+    endDate: row.endDate,
+    status: row.status,
+    createdAt: row.createdAt,
+    updatedAt: row.updatedAt
+  }));
 }
 
 export async function getCycleById(cycleId: number, userId: number): Promise<Cycle | undefined> {
