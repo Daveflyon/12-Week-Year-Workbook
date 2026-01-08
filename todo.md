@@ -75,3 +75,10 @@
 - [x] Scorecard: Add weekdays/weekends/all/custom fill patterns
 - [x] Checklist: Add "Check All" / "Uncheck All" buttons
 - [x] Checklist: Bulk update all items in parallel
+
+## Calendar-Style Schedule (Phase 8)
+- [x] Redesign Weekly Schedule to look like Google Calendar
+- [x] Add time slots on the left axis (e.g., 05:00, 06:00, 07:00...)
+- [x] Position blocks according to their actual start/end times
+- [x] Make block height proportional to duration
+- [x] Keep edit/delete functionality on blocks

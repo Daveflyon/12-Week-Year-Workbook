@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { trpc } from "@/lib/trpc";
 import { Clock, Plus, Trash2, Edit, Quote, Zap, Coffee, Sparkles } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { toast } from "sonner";
 import { getRandomQuote } from "@shared/quotes";
 import TooltipTour, { TourStep } from "@/components/TooltipTour";
@@ -24,7 +24,7 @@ const BLOCKS_TOUR_STEPS: TourStep[] = [
   {
     target: "[data-tour='weekly-schedule']",
     title: "Your Weekly Schedule",
-    content: "Plan your blocks for each day of the week. Consistency is key to building productive habits.",
+    content: "Plan your blocks for each day of the week. Blocks are positioned by their actual times, like Google Calendar.",
     position: "top",
   },
   {
@@ -38,9 +38,9 @@ const BLOCKS_TOUR_STEPS: TourStep[] = [
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const SHORT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const BLOCK_TYPES = [
-  { value: 'strategic', label: 'Strategic Block', icon: Zap, description: '3+ hours of uninterrupted deep work' },
-  { value: 'buffer', label: 'Buffer Block', icon: Coffee, description: '30-60 min for admin tasks' },
-  { value: 'breakout', label: 'Breakout Block', icon: Sparkles, description: '1-3 hours for growth & recharge' },
+  { value: 'strategic', label: 'Strategic Block', icon: Zap, description: '3+ hours of uninterrupted deep work', bgColor: 'bg-emerald-500/90', borderColor: 'border-l-emerald-400' },
+  { value: 'buffer', label: 'Buffer Block', icon: Coffee, description: '30-60 min for admin tasks', bgColor: 'bg-amber-500/90', borderColor: 'border-l-amber-400' },
+  { value: 'breakout', label: 'Breakout Block', icon: Sparkles, description: '1-3 hours for growth & recharge', bgColor: 'bg-violet-500/90', borderColor: 'border-l-violet-400' },
 ];
 
 type RepeatPattern = 'single' | 'weekdays' | 'weekends' | 'all' | 'custom';
@@ -53,14 +53,16 @@ const REPEAT_PATTERNS = [
   { value: 'custom', label: 'Custom', description: 'Select specific days' },
 ];
 
+const HOUR_HEIGHT = 48; // pixels per hour - more compact
+
 function getSelectedDays(pattern: RepeatPattern, customDays: number[], singleDay: number): number[] {
   switch (pattern) {
     case 'single':
       return [singleDay];
     case 'weekdays':
-      return [1, 2, 3, 4, 5]; // Mon-Fri
+      return [1, 2, 3, 4, 5];
     case 'weekends':
-      return [0, 6]; // Sun, Sat
+      return [0, 6];
     case 'all':
       return [0, 1, 2, 3, 4, 5, 6];
     case 'custom':
@@ -68,6 +70,11 @@ function getSelectedDays(pattern: RepeatPattern, customDays: number[], singleDay
     default:
       return [singleDay];
   }
+}
+
+function timeToMinutes(time: string): number {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
 }
 
 function BlockForm({ 
@@ -104,7 +111,6 @@ function BlockForm({
 
   const selectedDays = getSelectedDays(repeatPattern, customDays, singleDay);
 
-  // For edit mode, find similar blocks on other days
   const similarBlockDays = block && allBlocks 
     ? allBlocks
         .filter(b => b.blockType === block.blockType && b.startTime === block.startTime && b.id !== block.id)
@@ -114,9 +120,7 @@ function BlockForm({
   const handleSubmit = async () => {
     try {
       if (block) {
-        // Editing existing block
         if (repeatPattern === 'single') {
-          // Update just this block
           await updateBlock.mutateAsync({
             blockId: block.id,
             blockType,
@@ -127,14 +131,11 @@ function BlockForm({
           });
           toast.success("Block updated");
         } else {
-          // Bulk update - apply to multiple days
           const daysToUpdate = selectedDays;
-          
           if (daysToUpdate.length === 0) {
             toast.error("Please select at least one day");
             return;
           }
-
           await bulkUpdateBlock.mutateAsync({
             cycleId,
             sourceBlockId: block.id,
@@ -144,20 +145,15 @@ function BlockForm({
             endTime,
             description,
           });
-          
           const dayNames = daysToUpdate.map(d => SHORT_DAYS[d]).join(', ');
           toast.success(`Block${daysToUpdate.length > 1 ? 's' : ''} updated for ${dayNames}`);
         }
       } else {
-        // Create new blocks for all selected days
         const daysToCreate = selectedDays;
-        
         if (daysToCreate.length === 0) {
           toast.error("Please select at least one day");
           return;
         }
-
-        // Create blocks for each selected day
         for (const day of daysToCreate) {
           await createBlock.mutateAsync({
             cycleId,
@@ -168,7 +164,6 @@ function BlockForm({
             description,
           });
         }
-        
         const dayNames = daysToCreate.map(d => SHORT_DAYS[d]).join(', ');
         toast.success(`Block${daysToCreate.length > 1 ? 's' : ''} created for ${dayNames}`);
       }
@@ -205,7 +200,6 @@ function BlockForm({
         </p>
       </div>
 
-      {/* Apply To / Repeat Pattern - show for both create and edit */}
       <div className="space-y-2">
         <Label>{block ? 'Apply Changes To' : 'Repeat'}</Label>
         <Select value={repeatPattern} onValueChange={(v: RepeatPattern) => setRepeatPattern(v)}>
@@ -230,7 +224,6 @@ function BlockForm({
         )}
       </div>
 
-      {/* Single Day Selector - only show when single day pattern */}
       {repeatPattern === 'single' && (
         <div className="space-y-2">
           <Label>Day of Week</Label>
@@ -249,7 +242,6 @@ function BlockForm({
         </div>
       )}
 
-      {/* Custom Day Selector - show for custom pattern */}
       {repeatPattern === 'custom' && (
         <div className="space-y-2">
           <Label>Select Days</Label>
@@ -281,7 +273,6 @@ function BlockForm({
         </div>
       )}
 
-      {/* Preview of selected days for non-custom, non-single patterns */}
       {repeatPattern !== 'single' && repeatPattern !== 'custom' && (
         <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
           <p className="text-sm text-primary">
@@ -339,35 +330,67 @@ function BlockForm({
   );
 }
 
-function BlockCard({ block, onEdit, onDelete }: { block: any; onEdit: () => void; onDelete: () => void }) {
+interface CalendarBlockProps {
+  block: any;
+  startHour: number;
+  onEdit: () => void;
+  onDelete: () => void;
+}
+
+function CalendarBlock({ block, startHour, onEdit, onDelete }: CalendarBlockProps) {
   const blockType = BLOCK_TYPES.find(t => t.value === block.blockType);
   const Icon = blockType?.icon || Clock;
   
+  // Calculate position based on time
+  const startMinutes = timeToMinutes(block.startTime);
+  const endMinutes = timeToMinutes(block.endTime);
+  const startOffset = startHour * 60;
+  
+  const top = ((startMinutes - startOffset) / 60) * HOUR_HEIGHT;
+  const height = Math.max(24, ((endMinutes - startMinutes) / 60) * HOUR_HEIGHT);
+  
+  // Determine content based on height
+  const isCompact = height < 36;
+  
   return (
-    <div className={`p-4 rounded-lg border block-${block.blockType}`}>
-      <div className="flex items-start justify-between">
-        <div className="flex items-start gap-3">
-          <div className="h-10 w-10 rounded-lg bg-current/10 flex items-center justify-center">
-            <Icon className="h-5 w-5" />
+    <div
+      className={`absolute left-0.5 right-0.5 rounded ${blockType?.bgColor || 'bg-primary/80'} 
+        border-l-[3px] ${blockType?.borderColor || 'border-l-primary'}
+        cursor-pointer hover:brightness-110 transition-all overflow-hidden group shadow-sm`}
+      style={{ top: `${top}px`, height: `${height - 2}px` }}
+      onClick={onEdit}
+    >
+      <div className="px-1.5 py-0.5 h-full flex flex-col text-white">
+        {isCompact ? (
+          <div className="flex items-center gap-1 text-[10px] truncate">
+            <span className="font-medium truncate">{block.startTime} {block.description || blockType?.label.split(' ')[0]}</span>
           </div>
-          <div>
-            <h4 className="font-medium">{blockType?.label}</h4>
-            <p className="text-sm opacity-80">
-              {block.startTime} - {block.endTime}
-            </p>
-            {block.description && (
-              <p className="text-sm mt-1 opacity-70">{block.description}</p>
-            )}
-          </div>
-        </div>
-        <div className="flex gap-1">
-          <Button variant="ghost" size="icon" onClick={onEdit} className="h-8 w-8">
-            <Edit className="h-3 w-3" />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={onDelete} className="h-8 w-8">
-            <Trash2 className="h-3 w-3" />
-          </Button>
-        </div>
+        ) : (
+          <>
+            <div className="text-[11px] font-semibold truncate leading-tight">
+              {block.description || blockType?.label}
+            </div>
+            <div className="text-[10px] opacity-90">
+              {block.startTime} – {block.endTime}
+            </div>
+          </>
+        )}
+      </div>
+      
+      {/* Hover actions */}
+      <div className="absolute top-0.5 right-0.5 hidden group-hover:flex gap-0.5">
+        <button
+          onClick={(e) => { e.stopPropagation(); onEdit(); }}
+          className="p-0.5 rounded bg-black/20 hover:bg-black/40 text-white"
+        >
+          <Edit className="h-3 w-3" />
+        </button>
+        <button
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="p-0.5 rounded bg-black/20 hover:bg-red-500/80 text-white"
+        >
+          <Trash2 className="h-3 w-3" />
+        </button>
       </div>
     </div>
   );
@@ -397,6 +420,39 @@ export default function PerformanceBlocks() {
     }
   };
 
+  // Calculate the time range to display based on blocks
+  const timeRange = useMemo(() => {
+    if (!blocks || blocks.length === 0) {
+      return { start: 6, end: 20 }; // Default range
+    }
+    
+    let minHour = 24;
+    let maxHour = 0;
+    
+    blocks.forEach(block => {
+      const startHour = parseInt(block.startTime.split(':')[0]);
+      const endHour = Math.ceil(timeToMinutes(block.endTime) / 60);
+      minHour = Math.min(minHour, startHour);
+      maxHour = Math.max(maxHour, endHour);
+    });
+    
+    // Add padding and clamp
+    return {
+      start: Math.max(5, minHour - 1),
+      end: Math.min(23, maxHour + 1)
+    };
+  }, [blocks]);
+
+  // Generate visible time slots
+  const visibleTimeSlots = useMemo(() => {
+    return Array.from({ length: timeRange.end - timeRange.start + 1 }, (_, i) => {
+      const hour = i + timeRange.start;
+      return { hour, label: `${hour.toString().padStart(2, '0')}:00` };
+    });
+  }, [timeRange]);
+
+  const calendarHeight = visibleTimeSlots.length * HOUR_HEIGHT;
+
   // Group blocks by day
   const blocksByDay = DAYS.map((day, index) => ({
     day,
@@ -418,7 +474,7 @@ export default function PerformanceBlocks() {
 
   return (
     <AppLayout currentPage="blocks">
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -450,50 +506,84 @@ export default function PerformanceBlocks() {
           <p className="text-xs text-primary mt-2">— {quote.chapter}</p>
         </div>
 
-        {/* Block Types Reference */}
-        <div className="grid md:grid-cols-3 gap-4" data-tour="block-types">
+        {/* Block Types Legend */}
+        <div className="flex flex-wrap gap-4" data-tour="block-types">
           {BLOCK_TYPES.map(type => (
-            <Card key={type.value} className={`bg-card border-border block-${type.value}`}>
-              <CardContent className="pt-6">
-                <div className="flex items-center gap-3 mb-2">
-                  <type.icon className="h-5 w-5" />
-                  <h3 className="font-semibold">{type.label}</h3>
-                </div>
-                <p className="text-sm opacity-80">{type.description}</p>
-              </CardContent>
-            </Card>
+            <div key={type.value} className="flex items-center gap-2">
+              <div className={`w-3 h-3 rounded-sm ${type.bgColor}`} />
+              <span className="text-sm text-muted-foreground">{type.label}</span>
+            </div>
           ))}
         </div>
 
-        {/* Weekly Schedule */}
-        <Card className="bg-card border-border" data-tour="weekly-schedule">
-          <CardHeader>
+        {/* Calendar View */}
+        <Card className="bg-card border-border overflow-hidden" data-tour="weekly-schedule">
+          <CardHeader className="pb-2">
             <CardTitle>Weekly Schedule</CardTitle>
             <CardDescription>Your recurring performance blocks for each day</CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-7 gap-4">
-              {blocksByDay.map(({ day, dayIndex, blocks: dayBlocks }) => (
-                <div key={dayIndex} className="space-y-2">
-                  <h4 className="font-medium text-center text-sm pb-2 border-b border-border">
-                    {SHORT_DAYS[dayIndex]}
-                  </h4>
-                  <div className="space-y-2 min-h-[100px]">
-                    {dayBlocks.length === 0 ? (
-                      <p className="text-xs text-muted-foreground text-center py-4">No blocks</p>
-                    ) : (
-                      dayBlocks.map(block => (
-                        <BlockCard
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <div className="min-w-[700px]">
+                {/* Day Headers */}
+                <div className="flex border-b border-border bg-muted/30">
+                  <div className="w-14 flex-shrink-0 p-2 text-[10px] text-muted-foreground text-right pr-2 border-r border-border">
+                    
+                  </div>
+                  {blocksByDay.map(({ dayIndex }) => (
+                    <div 
+                      key={dayIndex} 
+                      className="flex-1 py-2 px-1 text-center border-r border-border/50 last:border-r-0"
+                    >
+                      <div className="font-medium text-xs">{SHORT_DAYS[dayIndex]}</div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Time Grid */}
+                <div className="flex relative" style={{ height: `${calendarHeight}px` }}>
+                  {/* Time Labels */}
+                  <div className="w-14 flex-shrink-0 border-r border-border relative bg-muted/10">
+                    {visibleTimeSlots.map(({ hour, label }, i) => (
+                      <div 
+                        key={hour}
+                        className="absolute w-full text-right pr-2 text-[10px] text-muted-foreground -translate-y-2"
+                        style={{ top: `${i * HOUR_HEIGHT}px` }}
+                      >
+                        {label}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Day Columns */}
+                  {blocksByDay.map(({ dayIndex, blocks: dayBlocks }) => (
+                    <div 
+                      key={dayIndex} 
+                      className="flex-1 border-r border-border/50 last:border-r-0 relative"
+                    >
+                      {/* Hour lines */}
+                      {visibleTimeSlots.map(({ hour }, i) => (
+                        <div 
+                          key={hour}
+                          className="absolute w-full border-t border-border/30"
+                          style={{ top: `${i * HOUR_HEIGHT}px` }}
+                        />
+                      ))}
+                      
+                      {/* Blocks */}
+                      {dayBlocks.map(block => (
+                        <CalendarBlock
                           key={block.id}
                           block={block}
+                          startHour={timeRange.start}
                           onEdit={() => setEditingBlock(block)}
                           onDelete={() => handleDelete(block.id)}
                         />
-                      ))
-                    )}
-                  </div>
+                      ))}
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           </CardContent>
         </Card>
