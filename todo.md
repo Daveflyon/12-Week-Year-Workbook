@@ -62,3 +62,8 @@
 ## Bug Fixes (Phase 5)
 - [x] Fix accountability partner invite not working after email sent (now sends notification to owner)
 - [x] Fix pre-cycle checklist checkboxes not clickable (was key mismatch between UI and DB)
+
+## Performance Blocks Enhancement (Phase 6)
+- [x] Add repeat pattern selector to Add Block dialog (Weekdays, All Days, Weekends, Custom)
+- [x] Allow custom day selection with checkboxes
+- [x] Create multiple blocks at once for selected days

@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { trpc } from "@/lib/trpc";
 import { Clock, Plus, Trash2, Edit, Quote, Zap, Coffee, Sparkles } from "lucide-react";
 import { useState } from "react";
@@ -29,17 +30,45 @@ const BLOCKS_TOUR_STEPS: TourStep[] = [
   {
     target: "[data-tour='add-block-btn']",
     title: "Add Performance Blocks",
-    content: "Click here to schedule a new block. Start with at least one Strategic block per day.",
+    content: "Click here to schedule a new block. Use repeat patterns to add blocks to multiple days at once.",
     position: "left",
   },
 ];
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const SHORT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const BLOCK_TYPES = [
   { value: 'strategic', label: 'Strategic Block', icon: Zap, description: '3+ hours of uninterrupted deep work' },
   { value: 'buffer', label: 'Buffer Block', icon: Coffee, description: '30-60 min for admin tasks' },
   { value: 'breakout', label: 'Breakout Block', icon: Sparkles, description: '1-3 hours for growth & recharge' },
 ];
+
+type RepeatPattern = 'single' | 'weekdays' | 'weekends' | 'all' | 'custom';
+
+const REPEAT_PATTERNS = [
+  { value: 'single', label: 'Single Day', description: 'Just one day' },
+  { value: 'weekdays', label: 'Weekdays', description: 'Monday to Friday' },
+  { value: 'weekends', label: 'Weekends', description: 'Saturday & Sunday' },
+  { value: 'all', label: 'Every Day', description: 'All 7 days' },
+  { value: 'custom', label: 'Custom', description: 'Select specific days' },
+];
+
+function getSelectedDays(pattern: RepeatPattern, customDays: number[], singleDay: number): number[] {
+  switch (pattern) {
+    case 'single':
+      return [singleDay];
+    case 'weekdays':
+      return [1, 2, 3, 4, 5]; // Mon-Fri
+    case 'weekends':
+      return [0, 6]; // Sun, Sat
+    case 'all':
+      return [0, 1, 2, 3, 4, 5, 6];
+    case 'custom':
+      return customDays;
+    default:
+      return [singleDay];
+  }
+}
 
 function BlockForm({ 
   cycleId, 
@@ -51,7 +80,9 @@ function BlockForm({
   onClose: () => void;
 }) {
   const [blockType, setBlockType] = useState<'strategic' | 'buffer' | 'breakout'>(block?.blockType || 'strategic');
-  const [dayOfWeek, setDayOfWeek] = useState(block?.dayOfWeek?.toString() || '1');
+  const [repeatPattern, setRepeatPattern] = useState<RepeatPattern>(block ? 'single' : 'weekdays');
+  const [singleDay, setSingleDay] = useState(block?.dayOfWeek ?? 1);
+  const [customDays, setCustomDays] = useState<number[]>(block ? [block.dayOfWeek] : [1, 2, 3, 4, 5]);
   const [startTime, setStartTime] = useState(block?.startTime || '09:00');
   const [endTime, setEndTime] = useState(block?.endTime || '12:00');
   const [description, setDescription] = useState(block?.description || '');
@@ -60,28 +91,52 @@ function BlockForm({
   const updateBlock = trpc.performanceBlock.update.useMutation();
   const utils = trpc.useUtils();
 
+  const toggleCustomDay = (dayIndex: number) => {
+    setCustomDays(prev => 
+      prev.includes(dayIndex) 
+        ? prev.filter(d => d !== dayIndex)
+        : [...prev, dayIndex].sort((a, b) => a - b)
+    );
+  };
+
+  const selectedDays = getSelectedDays(repeatPattern, customDays, singleDay);
+
   const handleSubmit = async () => {
     try {
       if (block) {
+        // Update existing block (single day only)
         await updateBlock.mutateAsync({
           blockId: block.id,
           blockType,
-          dayOfWeek: parseInt(dayOfWeek),
+          dayOfWeek: singleDay,
           startTime,
           endTime,
           description,
         });
         toast.success("Block updated");
       } else {
-        await createBlock.mutateAsync({
-          cycleId,
-          blockType,
-          dayOfWeek: parseInt(dayOfWeek),
-          startTime,
-          endTime,
-          description,
-        });
-        toast.success("Block created");
+        // Create new blocks for all selected days
+        const daysToCreate = selectedDays;
+        
+        if (daysToCreate.length === 0) {
+          toast.error("Please select at least one day");
+          return;
+        }
+
+        // Create blocks for each selected day
+        for (const day of daysToCreate) {
+          await createBlock.mutateAsync({
+            cycleId,
+            blockType,
+            dayOfWeek: day,
+            startTime,
+            endTime,
+            description,
+          });
+        }
+        
+        const dayNames = daysToCreate.map(d => SHORT_DAYS[d]).join(', ');
+        toast.success(`Block${daysToCreate.length > 1 ? 's' : ''} created for ${dayNames}`);
       }
       utils.performanceBlock.list.invalidate();
       onClose();
@@ -114,21 +169,88 @@ function BlockForm({
         </p>
       </div>
 
-      <div className="space-y-2">
-        <Label>Day of Week</Label>
-        <Select value={dayOfWeek} onValueChange={setDayOfWeek}>
-          <SelectTrigger className="bg-input border-border">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
+      {/* Repeat Pattern - only show for new blocks */}
+      {!block && (
+        <div className="space-y-2">
+          <Label>Repeat</Label>
+          <Select value={repeatPattern} onValueChange={(v: RepeatPattern) => setRepeatPattern(v)}>
+            <SelectTrigger className="bg-input border-border">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {REPEAT_PATTERNS.map(pattern => (
+                <SelectItem key={pattern.value} value={pattern.value}>
+                  <div className="flex flex-col">
+                    <span>{pattern.label}</span>
+                    <span className="text-xs text-muted-foreground">{pattern.description}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {/* Single Day Selector - only show when editing or single day pattern */}
+      {(block || repeatPattern === 'single') && (
+        <div className="space-y-2">
+          <Label>Day of Week</Label>
+          <Select value={singleDay.toString()} onValueChange={(v) => setSingleDay(parseInt(v))}>
+            <SelectTrigger className="bg-input border-border">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {DAYS.map((day, index) => (
+                <SelectItem key={index} value={index.toString()}>
+                  {day}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {/* Custom Day Selector - only show for custom pattern */}
+      {!block && repeatPattern === 'custom' && (
+        <div className="space-y-2">
+          <Label>Select Days</Label>
+          <div className="grid grid-cols-7 gap-2">
             {DAYS.map((day, index) => (
-              <SelectItem key={index} value={index.toString()}>
-                {day}
-              </SelectItem>
+              <div 
+                key={index}
+                className={`flex flex-col items-center p-2 rounded-lg border cursor-pointer transition-colors ${
+                  customDays.includes(index) 
+                    ? 'bg-primary/20 border-primary text-primary' 
+                    : 'bg-input border-border hover:border-primary/50'
+                }`}
+                onClick={() => toggleCustomDay(index)}
+              >
+                <Checkbox 
+                  checked={customDays.includes(index)}
+                  className="mb-1"
+                  onCheckedChange={() => toggleCustomDay(index)}
+                />
+                <span className="text-xs font-medium">{SHORT_DAYS[index]}</span>
+              </div>
             ))}
-          </SelectContent>
-        </Select>
-      </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            {customDays.length === 0 
+              ? 'Select at least one day' 
+              : `Selected: ${customDays.map(d => SHORT_DAYS[d]).join(', ')}`}
+          </p>
+        </div>
+      )}
+
+      {/* Preview of selected days for non-custom patterns */}
+      {!block && repeatPattern !== 'single' && repeatPattern !== 'custom' && (
+        <div className="p-3 rounded-lg bg-primary/10 border border-primary/20">
+          <p className="text-sm text-primary">
+            <span className="font-medium">Will create blocks for:</span>{' '}
+            {selectedDays.map(d => SHORT_DAYS[d]).join(', ')}
+          </p>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -165,10 +287,10 @@ function BlockForm({
         <Button variant="outline" onClick={onClose}>Cancel</Button>
         <Button 
           onClick={handleSubmit}
-          disabled={createBlock.isPending || updateBlock.isPending}
+          disabled={createBlock.isPending || updateBlock.isPending || (!block && repeatPattern === 'custom' && customDays.length === 0)}
           className="gradient-primary text-primary-foreground"
         >
-          {block ? "Update Block" : "Create Block"}
+          {block ? "Update Block" : `Create Block${selectedDays.length > 1 ? 's' : ''}`}
         </Button>
       </DialogFooter>
     </div>
@@ -305,109 +427,67 @@ export default function PerformanceBlocks() {
         <Card className="bg-card border-border" data-tour="weekly-schedule">
           <CardHeader>
             <CardTitle>Weekly Schedule</CardTitle>
-            <CardDescription>
-              Your recurring performance blocks for each day
-            </CardDescription>
+            <CardDescription>Your recurring performance blocks for each day</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid md:grid-cols-7 gap-4">
+            <div className="grid grid-cols-7 gap-4">
               {blocksByDay.map(({ day, dayIndex, blocks: dayBlocks }) => (
                 <div key={dayIndex} className="space-y-2">
-                  <h4 className="font-medium text-sm text-center pb-2 border-b border-border">
-                    {day.slice(0, 3)}
+                  <h4 className="font-medium text-center text-sm pb-2 border-b border-border">
+                    {SHORT_DAYS[dayIndex]}
                   </h4>
-                  {dayBlocks.length > 0 ? (
-                    <div className="space-y-2">
-                      {dayBlocks
-                        .sort((a, b) => a.startTime.localeCompare(b.startTime))
-                        .map(block => {
-                          const blockType = BLOCK_TYPES.find(t => t.value === block.blockType);
-                          const Icon = blockType?.icon || Clock;
-                          return (
-                            <div 
-                              key={block.id}
-                              className={`p-2 rounded-lg border text-xs block-${block.blockType} cursor-pointer hover:opacity-80 transition-opacity`}
-                              onClick={() => setEditingBlock(block)}
-                            >
-                              <div className="flex items-center gap-1 mb-1">
-                                <Icon className="h-3 w-3" />
-                                <span className="font-medium truncate">{blockType?.label.split(' ')[0]}</span>
-                              </div>
-                              <p className="opacity-80">{block.startTime}</p>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  ) : (
-                    <p className="text-xs text-muted-foreground text-center py-4">
-                      No blocks
-                    </p>
-                  )}
+                  <div className="space-y-2 min-h-[100px]">
+                    {dayBlocks.length === 0 ? (
+                      <p className="text-xs text-muted-foreground text-center py-4">No blocks</p>
+                    ) : (
+                      dayBlocks.map(block => (
+                        <BlockCard
+                          key={block.id}
+                          block={block}
+                          onEdit={() => setEditingBlock(block)}
+                          onDelete={() => handleDelete(block.id)}
+                        />
+                      ))
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
           </CardContent>
         </Card>
 
-        {/* All Blocks List */}
-        {blocks && blocks.length > 0 && (
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle>All Blocks</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {DAYS.map((day, dayIndex) => {
-                  const dayBlocks = blocks.filter(b => b.dayOfWeek === dayIndex);
-                  if (dayBlocks.length === 0) return null;
-                  
-                  return (
-                    <div key={dayIndex}>
-                      <h4 className="text-sm font-medium text-muted-foreground mb-2">{day}</h4>
-                      <div className="space-y-2">
-                        {dayBlocks
-                          .sort((a, b) => a.startTime.localeCompare(b.startTime))
-                          .map(block => (
-                            <BlockCard
-                              key={block.id}
-                              block={block}
-                              onEdit={() => setEditingBlock(block)}
-                              onDelete={() => handleDelete(block.id)}
-                            />
-                          ))}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Add Block Dialog */}
         <Dialog open={isAdding} onOpenChange={setIsAdding}>
-          <DialogContent>
+          <DialogContent className="bg-card border-border">
             <DialogHeader>
               <DialogTitle>Add Performance Block</DialogTitle>
               <DialogDescription>
-                Schedule a recurring block for focused work
+                Schedule a block to protect your focused work time. Use repeat patterns to add blocks to multiple days at once.
               </DialogDescription>
             </DialogHeader>
-            <BlockForm cycleId={activeCycle.id} onClose={() => setIsAdding(false)} />
+            <BlockForm 
+              cycleId={activeCycle.id} 
+              onClose={() => setIsAdding(false)} 
+            />
           </DialogContent>
         </Dialog>
 
         {/* Edit Block Dialog */}
-        <Dialog open={!!editingBlock} onOpenChange={() => setEditingBlock(null)}>
-          <DialogContent>
+        <Dialog open={!!editingBlock} onOpenChange={(open) => !open && setEditingBlock(null)}>
+          <DialogContent className="bg-card border-border">
             <DialogHeader>
               <DialogTitle>Edit Performance Block</DialogTitle>
+              <DialogDescription>
+                Update your block details.
+              </DialogDescription>
             </DialogHeader>
-            <BlockForm 
-              cycleId={activeCycle.id} 
-              block={editingBlock} 
-              onClose={() => setEditingBlock(null)} 
-            />
+            {editingBlock && (
+              <BlockForm 
+                cycleId={activeCycle.id} 
+                block={editingBlock}
+                onClose={() => setEditingBlock(null)} 
+              />
+            )}
           </DialogContent>
         </Dialog>
       </div>
